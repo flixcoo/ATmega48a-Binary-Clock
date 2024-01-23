@@ -2,6 +2,9 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
+void allLedsOn();
+void allLedsOff();
+
 void main() {
 	DDRC = (1<<5);
 	uint8_t time = 100;
@@ -13,43 +16,36 @@ void main() {
 		DDRD = (0xF8);//11111000
 
 		//C0
-	
 		PORTC|=(1<<0);
 		_delay_ms(time);
 		PORTC&=~(1<<0);
 
 		//C1
-	
 		PORTC|=(1<<1);
 		_delay_ms(time);
 		PORTC&=~(1<<1);
 		
 		//C2
-	
 		PORTC|=(1<<2);
 		_delay_ms(time);
 		PORTC&=~(1<<2);
 
 		//C3
-	
 		PORTC|=(1<<3);
 		_delay_ms(time);
 		PORTC&=~(1<<3);
 
 		//C4
-	
 		PORTC|=(1<<4);
 		_delay_ms(time);
 		PORTC&=~(1<<4);
 		
 		//C5
-	
 		PORTC|=(1<<5);
 		_delay_ms(time);
 		PORTC&=~(1<<5);
 		
 		//D3
-	
 		PORTD|=(1<<3);
 		_delay_ms(time);
 		PORTD&=~(1<<3);
