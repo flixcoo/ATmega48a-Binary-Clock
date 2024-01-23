@@ -75,16 +75,16 @@ void main() {
 		PORTD&=~(1<<7);
 		
 		_delay_ms(500);
-		alleAn();
+		allLedsOn();
 		_delay_ms(500);
-		alleAus();
+		allLedsOff();
 		_delay_ms(500);
 
 
 		}
 }
 
-void alleAn(){
+void allLedsOn(){
 	PORTC|=(1<<0);
 	PORTC|=(1<<1);
 	PORTC|=(1<<2);
@@ -98,7 +98,7 @@ void alleAn(){
 	PORTD|=(1<<7);
 }
 
-void alleAus(){
+void allLedsOff(){
 	PORTC&=~(1<<0);
 	PORTC&=~(1<<1);
 	PORTC&=~(1<<2);
