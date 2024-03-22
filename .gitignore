@@ -3,6 +3,5 @@ main_eeprom.hex
 main.elf
 main.hex
 main.o
-.idea/modules.xml
-.idea/vcs.xml
-.idea/workspace.xml
+.idea/*
+.git/*

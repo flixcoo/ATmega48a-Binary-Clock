@@ -69,6 +69,8 @@ int main() {
     while (1) {
         if (debounce_button_b(BUTTON1)) {
             _delay_ms(50);
+            HOUR_LEDS_PORT = 0x00;
+            MINUTE_LEDS_PORT = 0x00;
             sleep_mode_activate();
         }
         if (debounce_button_b(BUTTON2)) {
@@ -150,8 +152,8 @@ uint8_t debounce_button_d(uint8_t button) {
 }
 
 void sleep_mode_activate() {
-    set_sleep_mode(SLEEP_MODE_ADC); // Setze den Sleep-Modus auf ADC Noise Reduction
-    cli(); // Deaktiviere Interrupts, um den Schlafmodus sicher zu betreten
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Setze den Sleep-Modus auf ADC Noise Reduction
+    //cli(); // Deaktiviere Interrupts, um den Schlafmodus sicher zu betreten
     sleep_enable(); // Sleep-Modus aktivieren
     sei(); // Interrupts wieder aktivieren
     sleep_cpu(); // CPU in den Sleep-Modus versetzen
