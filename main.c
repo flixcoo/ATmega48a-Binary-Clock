@@ -55,6 +55,11 @@ ISR(TIMER2_OVF_vect) {
     }
 }
 
+ISR(PCINT0_vect) {
+        // Interrupt Service Routine für Pin-Change-Interrupt
+        // Notwendig, um aus dem Sleep-Modus aufzuwachen, wird aber im Code nicht direkt verwendet
+}
+
 int main() {
     init_clock(); //Uhr initialisieren
     setup_timer2_asynchronous(); //Timer aktivieren
@@ -84,15 +89,18 @@ void setup_wakeup_interrupts() {
     PCMSK0 |= (1 << PCINT0); // Pin-Change-Interrupt für PB0 aktivieren
 }
 
-void init_clock() {
+void init_clock(void) {
     HOUR_LEDS_DDR |= 0xF8; // Stunden-LEDs als Ausgang - 11111000
     MINUTE_LEDS_DDR |= 0x3F; // Minuten-LEDs als Ausgang
 
     BUTTON_DDR_B &= ~((1 << PB0) | (1 << PB1)); // Taster an PB0 und PB1 als Eingang
-    BUTTON_PORT_B |= (BUTTON1 | BUTTON2); // Pull-up Widerstaende der Taster aktivieren
+    BUTTON_PORT_B |= (BUTTON1 | BUTTON2); // Pull-up Widerstände der Taster aktivieren
 
     BUTTON_DDR_D &= ~(1 << PD2); // Taster an PD2 als Eingang
     BUTTON_PORT_D |= BUTTON3; // Pull-up Widerstand des Tasters aktivieren
+
+    PCICR |= (1 << PCIE0); // Pin-Change-Interrupts aktivieren (Notwendig für das Aufwachen)
+    PCMSK0 |= (1 << PCINT0) | (1 << PCINT1); // Pin-Change-Interrupts für PB0 und PB1 aktivieren
 }
 
 void update_time() {
@@ -154,20 +162,21 @@ uint8_t debounce_button_d(uint8_t button) {
 void toggle_sleep_mode(void) {
     if (clock_state) {
         // LEDs ausschalten
-        HOUR_LEDS_PORT = 0x00;
-        MINUTE_LEDS_PORT = 0x00;
+        HOUR_LEDS_PORT &= ~(0xF8);
+        MINUTE_LEDS_PORT &= ~(0x3F);
         // Sleep-Modus aktivieren
-        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-        cli(); // Deaktiviere Interrupts
-        sleep_enable();
-        sei(); // Aktiviere Interrupts
+        set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+        cli(); // Globale Interrupts deaktivieren
+        sleep_enable(); // Sleep-Modus aktivieren
+        sei(); // Globale Interrupts aktivieren
         sleep_cpu(); // CPU schlafen legen
         sleep_disable(); // Sleep-Modus deaktivieren nach dem Aufwachen
-        // Beim Aufwachen wieder aktivieren
-        clock_state = 0;
+
+        // Nach dem Aufwachen
+        clock_state = 0; // Aktualisiere den Zustand zu "wach"
     } else {
-        // Beim Aufwachen aus dem Sleep-Modus
-        clock_state = 1;
-        display_time(); // Uhrzeit anzeigen
+        // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
+        display_time();
+        clock_state = 1; // Zustand auf "schlafend" setzen
     }
 }
