@@ -30,7 +30,7 @@ typedef struct {
 } time_t;
 
 volatile time_t currentTime = {12, 0};
-volatile uint8_t clock_state = 1;
+volatile uint8_t clock_state = 1; // Wird verwendet, um zu tracken, ob wir im Sleep-Modus sind oder nicht
 volatile uint8_t pwm_value = 0xFF;
 volatile uint8_t seconds = 0;
 
@@ -40,7 +40,8 @@ void update_time();
 void display_time();
 void setup_pwm_for_brightness();
 void setup_timer2_asynchronous();
-void sleep_mode_activate();
+void setup_wakeup_interrupts();
+void toggle_sleep_mode();
 uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 
@@ -54,24 +55,17 @@ ISR(TIMER2_OVF_vect) {
     }
 }
 
-// Timer0 Compare Match A Interrupt Service Routine fuer PWM-Helligkeitssteuerung
-ISR(TIMER0_COMPA_vect) {
-        // Helligkeitssteuerung hier nicht direkt noetig, da PWM durch Timer0 Hardware gesteuert wird
-}
-
-
 int main() {
     init_clock(); //Uhr initialisieren
     setup_timer2_asynchronous(); //Timer aktivieren
     sei(); // Global Interrupts aktivieren
+    //setup_wakeup_interrupts();
     display_time(); //Startzeit darstellen
 
     while (1) {
         if (debounce_button_b(BUTTON1)) {
             _delay_ms(50);
-            HOUR_LEDS_PORT = 0x00;
-            MINUTE_LEDS_PORT = 0x00;
-            sleep_mode_activate();
+            toggle_sleep_mode();
         }
         if (debounce_button_b(BUTTON2)) {
             currentTime.minutes = (currentTime.minutes + 1) % 60;
@@ -82,6 +76,12 @@ int main() {
             display_time();
         }
     }
+}
+
+void setup_wakeup_interrupts() {
+    // Konfigurieren Sie PCINT0 (Pin-Change-Interrupt für PB0) als Quelle für das Aufwachen
+    PCICR |= (1 << PCIE0); // Pin-Change-Interrupt für Port B aktivieren
+    PCMSK0 |= (1 << PCINT0); // Pin-Change-Interrupt für PB0 aktivieren
 }
 
 void init_clock() {
@@ -151,11 +151,23 @@ uint8_t debounce_button_d(uint8_t button) {
     return !(BUTTON_PIN_D & button);
 }
 
-void sleep_mode_activate() {
-    set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Setze den Sleep-Modus auf ADC Noise Reduction
-    //cli(); // Deaktiviere Interrupts, um den Schlafmodus sicher zu betreten
-    sleep_enable(); // Sleep-Modus aktivieren
-    sei(); // Interrupts wieder aktivieren
-    sleep_cpu(); // CPU in den Sleep-Modus versetzen
-    sleep_disable(); // Sleep-Modus deaktivieren, sobald der CPU aufwacht
+void toggle_sleep_mode(void) {
+    if (clock_state) {
+        // LEDs ausschalten
+        HOUR_LEDS_PORT = 0x00;
+        MINUTE_LEDS_PORT = 0x00;
+        // Sleep-Modus aktivieren
+        set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+        cli(); // Deaktiviere Interrupts
+        sleep_enable();
+        sei(); // Aktiviere Interrupts
+        sleep_cpu(); // CPU schlafen legen
+        sleep_disable(); // Sleep-Modus deaktivieren nach dem Aufwachen
+        // Beim Aufwachen wieder aktivieren
+        clock_state = 0;
+    } else {
+        // Beim Aufwachen aus dem Sleep-Modus
+        clock_state = 1;
+        display_time(); // Uhrzeit anzeigen
+    }
 }
