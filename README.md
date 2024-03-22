@@ -24,12 +24,14 @@ Button 3: `PD2`
 Uhrenquarz: `PB6` + `PB7`
 
 ## Funktionalität
-### Quarzmessung
+Im Standardbetrieb startet die Uhr beim Einlegen der Batterie bei 12:00 Uhr.
+### Tasterbelegung
+Über das Drücken des Taster 1 wird der Energiesparmodus aktiviert (siehe [Energiesparmodus](#Energiesparmodus)). Über ein weiteres Drücken des Tasters wird der Energiesparmodus wieder deaktiviert.  
+Mithilfe des Taster 2 lassen sich die Stundenzahlen, welche auf der Uhr angezeigt werden, inkrementiert. Diese gehen hoch bis 23 und starten danach wieder bei 0.  
+Der dritte Taster dient dem Inkrementieren der Minuten. Diese gehen hoch bis zur 59 und wechseln danach wieder auf die 0.
+### Zeitmessung über Timer und Uhrenquarz
 //ToDo
-### Power-Safe-Mode
+### Energiesparmodus
 //ToDo
 ### Helligkeitssteuerung
 //ToDo
-
-> [!NOTE]
-> Useful information that users should know, even when skimming content.
