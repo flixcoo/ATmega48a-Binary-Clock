@@ -15,12 +15,17 @@
 
 
 // Taster-Konfigurationen
-#define BUTTON_DDR   DDRD
-#define BUTTON_PORT  PORTD
-#define BUTTON_PIN   PIND
-#define BUTTON1      _BV(PD0)
-#define BUTTON2      _BV(PD1)
-#define BUTTON3      _BV(PD2)
+#define BUTTON_DDR_B DDRB
+#define BUTTON_PORT_B PORTB
+#define BUTTON_PIN_B PINB
+#define BUTTON1 _BV(PB0) // Taster 1 an PB0
+#define BUTTON2 _BV(PB1) // Taster 2 an PB1
+
+
+#define BUTTON_DDR_D DDRD
+#define BUTTON_PORT_D PORTD
+#define BUTTON_PIN_D PIND
+#define BUTTON3 _BV(PD2) // Taster 3 an PD2
 
 
 // Zeitstruktur
@@ -30,33 +35,34 @@ typedef struct {
 } time_t;
 
 
-volatile time_t currentTime = {12, 0}; // Initialzeit setzen
-volatile uint8_t clock_state = 1; // Uhr eingeschaltet starten
-volatile uint8_t pwm_value = 0xFF; // Initialer PWM-Helligkeitswert
-volatile uint8_t seconds = 0; // Zählt die Sekunden
-
+volatile time_t currentTime = {12, 0};
+volatile uint8_t clock_state = 1;
+volatile uint8_t pwm_value = 0xFF;
+volatile uint8_t seconds = 0;
 
 
 // Funktionsprototypen
 void init_clock(void);
-void update_time(int direction);
+void update_time(void);
 void display_time(void);
 void setup_pwm_for_brightness(void);
 void setup_timer2_asynchronous(void);
 void sleep_mode_activate(void);
-uint8_t debounce_button(uint8_t button);
+uint8_t debounce_button_b(uint8_t button);
+uint8_t debounce_button_d(uint8_t button);
 
 
-// Timer2 Overflow Interrupt Service Routine
+
 ISR(TIMER2_OVF_vect) {
     if(clock_state) {
-        seconds++; // Erhöhe die Sekunden
-        if(seconds >= 60) { // Eine Minute ist vergangen
-            seconds = 0; // Sekundenzähler zurücksetzen
-            update_time(1); // Zeit um eine Minute erhöhen
+        seconds++;
+        if(seconds >= 60) {
+            seconds = 0;
+            update_time();
         }
     }
 }
+
 
 
 
@@ -64,6 +70,7 @@ ISR(TIMER2_OVF_vect) {
 ISR(TIMER0_COMPA_vect) {
     // Helligkeitssteuerung hier nicht direkt nötig, da PWM durch Timer0 Hardware gesteuert wird
 }
+
 
 
 int main(void) {
@@ -74,48 +81,57 @@ int main(void) {
 
 
     while (1) {
-        if (debounce_button(BUTTON1)) {
-            clock_state ^= 1; // Zustand umschalten
-            if(!clock_state) {
-                // LEDs ausschalten wenn die Uhr ausgeschaltet ist
-                HOUR_LEDS_PORT &= ~((1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7));
-                MINUTE_LEDS_PORT &= ~((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5));
+        if (debounce_button_b(BUTTON1)) {
+            HOUR_LEDS_PORT &= ~(0x00);
+            MINUTE_LEDS_PORT &= ~(0x00);
+        }
+
+
+        if (debounce_button_b(BUTTON2)) {
+            currentTime.minutes = (currentTime.minutes + 1) % 60;
+            if (currentTime.minutes == 0) {
+                currentTime.hours = (currentTime.hours + 1) % 24;
             }
+            display_time();
         }
 
 
-        if(debounce_button(BUTTON2)) {
-            sleep_mode_activate();
+        if (debounce_button_d(BUTTON3)) {
+            currentTime.hours = (currentTime.hours + 1) % 24;
+            display_time();
         }
 
 
-        if(clock_state) {
-            display_time(); // Zeit anzeigen wenn die Uhr eingeschaltet ist
-        }
+        // Implementierung der PWM-Helligkeitssteuerung fehlt
     }
 }
+
+
 
 
 void init_clock(void) {
     HOUR_LEDS_DDR |= 0xF8; // Stunden-LEDs als Ausgang
     MINUTE_LEDS_DDR |= 0x3F; // Minuten-LEDs als Ausgang
-    BUTTON_DDR &= ~(BUTTON1 | BUTTON2); // Taster als Eingang
-    BUTTON_PORT |= (BUTTON1 | BUTTON2 | BUTTON3); // Aktiviere Pull-up für Taster 1, 2 und 3
+   
+    BUTTON_DDR_B &= ~((1 << PB0) | (1 << PB1)); // Taster als Eingang
+    BUTTON_PORT_B |= (BUTTON1 | BUTTON2); // Pull-up Widerstände aktivieren
+   
+    BUTTON_DDR_D &= ~(1 << PD2); // Taster als Eingang
+    BUTTON_PORT_D |= BUTTON3; // Pull-up Widerstand aktivieren
 }
 
 
-void update_time(int direction) {
-    // Diese Funktion wird jede Sekunde durch den Timer Interrupt aufgerufen
+
+
+void update_time(void) {
     currentTime.minutes++;
     if (currentTime.minutes >= 60) {
-        currentTime.minutes = 0; // Zurücksetzen der Minuten nach 59
-        currentTime.hours++;
-        if (currentTime.hours >= 24) {
-            currentTime.hours = 0; // Zurücksetzen der Stunden nach 23
-        }
+        currentTime.minutes = 0;
+        currentTime.hours = (currentTime.hours + 1) % 24;
     }
-    display_time(); // Aktualisiere die Anzeige nach jeder Zeitänderung
+    display_time();
 }
+
 
 
 
@@ -125,12 +141,14 @@ void display_time(void) {
     MINUTE_LEDS_PORT &= ~0x3F; // Löscht die Bits von PC0 bis PC5
 
 
+
     // Setzen der Stunden-LEDs in binärer Form
     for (uint8_t i = 0; i < 5; i++) { // Angenommen, es gibt 5 LEDs für Stunden
         if (currentTime.hours & (1 << i)) {
             HOUR_LEDS_PORT |= (1 << (i + PD3));
         }
     }
+
 
 
     // Setzen der Minuten-LEDs in binärer Form
@@ -143,12 +161,14 @@ void display_time(void) {
 
 
 
+
 void setup_pwm_for_brightness(void) {
     TCCR0A |= (1 << WGM01) | (1 << WGM00); // Fast-PWM-Modus
     TCCR0A |= (1 << COM0A1); // Nicht-invertierender Modus
     TCCR0B |= (1 << CS00); // Kein Prescaler
     OCR0A = pwm_value; // Initialer PWM-Wert
 }
+
 
 
 // Initialisierungsfunktion für Timer2 im asynchronen Modus
@@ -163,6 +183,7 @@ void setup_timer2_asynchronous(void) {
 }
 
 
+
 void sleep_mode_activate(void) {
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
     sleep_enable();
@@ -171,7 +192,14 @@ void sleep_mode_activate(void) {
 }
 
 
-uint8_t debounce_button(uint8_t button) {
-    _delay_ms(50); // Kurze Verzögerung für Entprellung
-    return !(BUTTON_PIN & button);
+
+uint8_t debounce_button_b(uint8_t button) {
+    _delay_ms(50);
+    return !(BUTTON_PIN_B & button);
+}
+
+
+uint8_t debounce_button_d(uint8_t button) {
+    _delay_ms(50);
+    return !(BUTTON_PIN_D & button);
 }
