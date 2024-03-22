@@ -2,7 +2,7 @@
 
 ## Pin-Belegung
 <img src="atmega_layout.png" width="500">
- <table>
+ <table style="border: 0px">
   <tr>
     <th>Pin</th>
     <th>Nutzen</th>
