@@ -12,8 +12,8 @@ Stunde 2<sup>4</sup>: `PD3`
 ### Minuten-LEDs
 Minute 2<sup>5</sup>: `PC5`  
 Minute 2<sup>4</sup>: `PC4`  
-Minute 2<sup>3</sup>: `PC3`
-Minute 2<sup>2</sup>: `PC2`  
+Minute 2<sup>3</sup>: `PC3`     
+Minute 2<sup>2</sup>: `PC2  `  
 Minute 2<sup>1</sup>: `PC1`  
 Minute 2<sup>0</sup>: `PC0`  
 ### Buttons  
