@@ -205,11 +205,11 @@ void startup_sequence() {
         PORTC &= ~(1 << i);
     }
 
-    _delay_ms(500);
+    _delay_ms(400);
     all_leds_on();
-    _delay_ms(500);
+    _delay_ms(400);
     all_leds_off();
-    _delay_ms(500);
+    _delay_ms(200);
 }
 
 void all_leds_on() {
