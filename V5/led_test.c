@@ -3,16 +3,12 @@
 #include <avr/io.h>
 #include <util/delay.h>
 
-void allLedsOn();
-void allLedsOff();
+void all_leds_on();
+void all_leds_off();
 
 void main() {
-    DDRC = (1 << 5);
     uint8_t time = 100;
     while (1) {
-
-        //C 0 - 5
-        //D 3 - 7
         DDRC = (0x3F);//00111111
         DDRD = (0xF8);//11111000
 
@@ -29,39 +25,19 @@ void main() {
         }
 
         _delay_ms(500);
-        allLedsOn();
+        all_leds_on();
         _delay_ms(500);
-        allLedsOff();
+        all_leds_off();
         _delay_ms(500);
-
-
     }
 }
 
-void allLedsOn() {
-    PORTC |= (1 << 0);
-    PORTC |= (1 << 1);
-    PORTC |= (1 << 2);
-    PORTC |= (1 << 3);
-    PORTC |= (1 << 4);
-    PORTC |= (1 << 5);
-    PORTD |= (1 << 3);
-    PORTD |= (1 << 4);
-    PORTD |= (1 << 5);
-    PORTD |= (1 << 6);
-    PORTD |= (1 << 7);
+void all_leds_on() {
+    PORTC |= 0x3F; //00111111 - Minuten-LEDs
+    PORTD |= 0xF8; //11111000 - Stunden-LEDs
 }
 
-void allLedsOff() {
-    PORTC &= ~(1 << 0);
-    PORTC &= ~(1 << 1);
-    PORTC &= ~(1 << 2);
-    PORTC &= ~(1 << 3);
-    PORTC &= ~(1 << 4);
-    PORTC &= ~(1 << 5);
-    PORTD &= ~(1 << 3);
-    PORTD &= ~(1 << 4);
-    PORTD &= ~(1 << 5);
-    PORTD &= ~(1 << 6);
-    PORTD &= ~(1 << 7);
+void all_leds_off() {
+    PORTC &= ~0x3F; //00111111 - Minuten-LEDs
+    PORTD &= ~0xF8; //11111000 - Stunden-LEDs
 }
