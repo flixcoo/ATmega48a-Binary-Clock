@@ -81,29 +81,29 @@ void main() {
 }
 
 void allLedsOn(){
-	PORTC|=(1<<0);
-	PORTC|=(1<<1);
-	PORTC|=(1<<2);
-	PORTC|=(1<<3);
-	PORTC|=(1<<4);
-	PORTC|=(1<<5);
-	PORTD|=(1<<3);
-	PORTD|=(1<<4);
-	PORTD|=(1<<5);
-	PORTD|=(1<<6);
-	PORTD|=(1<<7);
+	PORTC |= (1<<0);
+	PORTC |= (1<<1);
+	PORTC |= (1<<2);
+	PORTC |= (1<<3);
+	PORTC |= (1<<4);
+	PORTC |= (1<<5);
+	PORTD |= (1<<3);
+	PORTD |= (1<<4);
+	PORTD |= (1<<5);
+	PORTD |= (1<<6);
+	PORTD |= (1<<7);
 }
 
 void allLedsOff(){
-	PORTC&=~(1<<0);
-	PORTC&=~(1<<1);
-	PORTC&=~(1<<2);
-	PORTC&=~(1<<3);
-	PORTC&=~(1<<4);
-	PORTC&=~(1<<5);
-	PORTD&=~(1<<3);
-	PORTD&=~(1<<4);
-	PORTD&=~(1<<5);
-	PORTD&=~(1<<6);
-	PORTD&=~(1<<7);
+	PORTC &= ~(1<<0);
+	PORTC &= ~(1<<1);
+	PORTC &= ~(1<<2);
+	PORTC &= ~(1<<3);
+	PORTC &= ~(1<<4);
+	PORTC &= ~(1<<5);
+	PORTD &= ~(1<<3);
+	PORTD &= ~(1<<4);
+	PORTD &= ~(1<<5);
+	PORTD &= ~(1<<6);
+	PORTD &= ~(1<<7);
 }
