@@ -51,9 +51,9 @@ void toggle_sleep_mode();
 
 void startup_sequence();
 
-void allLedsOn();
+void all_leds_on();
 
-void allLedsOff();
+void all_leds_off();
 
 uint8_t debounce_button_b(uint8_t button);
 
@@ -100,12 +100,16 @@ int main() {
                 display_time();
             }
         }
+
+        if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))){
+            //ToDo
+        }
     }
 }
 
 void init_clock(void) {
     HOUR_LEDS_DDR |= 0xF8; // Stunden-LEDs als Ausgang - 11111000
-    MINUTE_LEDS_DDR |= 0x3F; // Minuten-LEDs als Ausgang
+    MINUTE_LEDS_DDR |= 0x3F; // Minuten-LEDs als Ausgang - 00111111
 
     BUTTON_DDR_B &= ~((1 << PB0) | (1 << PB1)); // Taster an PB0 und PB1 als Eingang
     BUTTON_PORT_B |= (BUTTON1 | BUTTON2); // Pull-up Widerstände der Taster aktivieren
@@ -189,31 +193,31 @@ void toggle_sleep_mode(void) {
 }
 
 void startup_sequence() {
-    for(int i = 7; i >= 3; i--){
+    for (int i = 7; i >= 3; i--) {
         PORTD |= (1 << i);
         _delay_ms(100);
         PORTD &= ~(1 << i);
     }
 
-    for(int i = 5; i >= 0; i--){
+    for (int i = 5; i >= 0; i--) {
         PORTC |= (1 << i);
         _delay_ms(100);
         PORTC &= ~(1 << i);
     }
 
     _delay_ms(500);
-    allLedsOn();
+    all_leds_on();
     _delay_ms(500);
-    allLedsOff();
+    all_leds_off();
     _delay_ms(500);
 }
 
-void allLedsOn() {
+void all_leds_on() {
     PORTC |= 0x3F; //00111111 - Minuten-LEDs
     PORTD |= 0xF8; //11111000 - Stunden-LEDs
 }
 
-void allLedsOff() {
+void all_leds_off() {
     PORTC &= ~0x3F; //00111111 - Minuten-LEDs
     PORTD &= ~0xF8; //11111000 - Stunden-LEDs
 }
