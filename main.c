@@ -49,6 +49,12 @@ void setup_wakeup_interrupts();
 
 void toggle_sleep_mode();
 
+void startup_sequence();
+
+void allLedsOn();
+
+void allLedsOff();
+
 uint8_t debounce_button_b(uint8_t button);
 
 uint8_t debounce_button_d(uint8_t button);
@@ -70,11 +76,12 @@ int main() {
     init_clock(); //Uhr initialisieren
     setup_timer2_asynchronous(); //Timer aktivieren
     sei(); // Global Interrupts aktivieren
+    startup_sequence();
     display_time(); //Startzeit darstellen
 
     while (1) {
-        if(!clock_state){
-            set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+        if (!clock_state) {
+            set_sleep_mode(SLEEP_MODE_ADC);
             sleep_mode();
         }
         if (debounce_button_b(BUTTON1)) {
@@ -179,4 +186,77 @@ void toggle_sleep_mode(void) {
         display_time();
         clock_state = 1; // Zustand auf "wach" setzen
     }
+}
+
+void startup_sequence() {
+    //D7
+    PORTD |= (1 << 7);
+    _delay_ms(100);
+    PORTD &= ~(1 << 7);
+
+    //D6
+    PORTD |= (1 << 6);
+    _delay_ms(100);
+    PORTD &= ~(1 << 6);
+
+    //D5
+    PORTD |= (1 << 5);
+    _delay_ms(100);
+    PORTD &= ~(1 << 5);
+
+    //D4
+    PORTD |= (1 << 4);
+    _delay_ms(100);
+    PORTD &= ~(1 << 4);
+
+    //D3
+    PORTD |= (1 << 3);
+    _delay_ms(100);
+    PORTD &= ~(1 << 3);
+
+    //C5
+    PORTC |= (1 << 5);
+    _delay_ms(100);
+    PORTC &= ~(1 << 5);
+
+    //C4
+    PORTC |= (1 << 4);
+    _delay_ms(100);
+    PORTC &= ~(1 << 4);
+
+    //C3
+    PORTC |= (1 << 3);
+    _delay_ms(100);
+    PORTC &= ~(1 << 3);
+
+    //C2
+    PORTC |= (1 << 2);
+    _delay_ms(100);
+    PORTC &= ~(1 << 2);
+
+    //C1
+    PORTC |= (1 << 1);
+    _delay_ms(100);
+    PORTC &= ~(1 << 1);
+
+    //C0
+    PORTC |= (1 << 0);
+    _delay_ms(100);
+    PORTC &= ~(1 << 0);
+
+    _delay_ms(500);
+    allLedsOn();
+    _delay_ms(500);
+    allLedsOff();
+    _delay_ms(500);
+}
+
+void allLedsOn() {
+    PORTC |= 0x3F; //00111111 - Minuten-LEDs
+    PORTD |= 0xF8; //11111000 - Stunden-LEDs
+}
+
+void allLedsOff() {
+    PORTC &= ~0x3F; //00111111 - Minuten-LEDs
+    PORTD &= ~0xF8; //11111000 - Stunden-LEDs
 }
