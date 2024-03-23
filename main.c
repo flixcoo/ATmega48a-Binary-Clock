@@ -36,21 +36,29 @@ volatile uint8_t seconds = 0;
 
 // Funktionsprototypen
 void init_clock();
+
 void update_time();
+
 void display_time();
+
 void setup_pwm_for_brightness();
+
 void setup_timer2_asynchronous();
+
 void setup_wakeup_interrupts();
+
 void toggle_sleep_mode();
+
 uint8_t debounce_button_b(uint8_t button);
+
 uint8_t debounce_button_d(uint8_t button);
 
 ISR(TIMER2_OVF_vect) {
-    seconds++;
-    if(seconds >= 60) {
-        seconds = 0;
-        update_time();
-    }
+        seconds++;
+        if (seconds >= 60) {
+            seconds = 0;
+            update_time();
+        }
 }
 
 ISR(PCINT0_vect) {
@@ -66,26 +74,34 @@ int main() {
     display_time(); //Startzeit darstellen
 
     while (1) {
+        if(!clock_state){
+            set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+            sleep_cpu(); // CPU schlafen legen
+        }
         if (debounce_button_b(BUTTON1)) {
             _delay_ms(50);
             toggle_sleep_mode();
         }
         if (debounce_button_b(BUTTON2)) {
             currentTime.minutes = (currentTime.minutes + 1) % 60;
-            display_time();
+            if (clock_state) {
+                display_time();
+            }
         }
         if (debounce_button_d(BUTTON3)) {
             currentTime.hours = (currentTime.hours + 1) % 24;
-            display_time();
+            if (clock_state) {
+                display_time();
+            }
         }
     }
 }
-
+/*
 void setup_wakeup_interrupts() {
     // Konfigurieren Sie PCINT0 (Pin-Change-Interrupt für PB0) als Quelle für das Aufwachen
     PCICR |= (1 << PCIE0); // Pin-Change-Interrupt für Port B aktivieren
     PCMSK0 |= (1 << PCINT0); // Pin-Change-Interrupt für PB0 aktivieren
-}
+}*/
 
 void init_clock(void) {
     HOUR_LEDS_DDR |= 0xF8; // Stunden-LEDs als Ausgang - 11111000
@@ -107,7 +123,7 @@ void update_time() {
         currentTime.minutes = 0;
         currentTime.hours = (currentTime.hours + 1) % 24;
     }
-    if(clock_state) {
+    if (clock_state) {
         display_time();
     }
 }
@@ -138,13 +154,13 @@ void setup_pwm_for_brightness() {
 
 // Initialisierungsfunktion fuer Timer2 im asynchronen Modus fuer
 void setup_timer2_asynchronous() {
-    ASSR |= (1<<AS2); // Aktiviere den asynchronen Modus von Timer2
+    ASSR |= (1 << AS2); // Aktiviere den asynchronen Modus von Timer2
     // Konfiguriere Timer2
     TCCR2A = 0; // Normaler Modus
-    TCCR2B = (1<<CS22) | (1<<CS20); // Prescaler auf 128 setzen
+    TCCR2B = (1 << CS22) | (1 << CS20); // Prescaler auf 128 setzen
     // Warte, bis die Update-Busy-Flags geloescht sind
-    while (ASSR & ((1<<TCN2UB)|(1<<OCR2AUB)|(1<<OCR2BUB)|(1<<TCR2AUB)|(1<<TCR2BUB)));
-    TIMSK2 = (1<<TOIE2); // Timer/Counter2 Overflow Interrupt Enable
+    while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
+    TIMSK2 = (1 << TOIE2); // Timer/Counter2 Overflow Interrupt Enable
 }
 
 // Funktion für Buttons an PB0 & PB1
@@ -165,7 +181,7 @@ void toggle_sleep_mode(void) {
         HOUR_LEDS_PORT &= ~(0xF8);
         MINUTE_LEDS_PORT &= ~(0x3F);
         // Sleep-Modus aktivieren
-        set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+        set_sleep_mode(SLEEP_MODE_ADC);
         cli(); // Globale Interrupts deaktivieren
         sleep_enable(); // Sleep-Modus aktivieren
         sei(); // Globale Interrupts aktivieren
@@ -173,10 +189,10 @@ void toggle_sleep_mode(void) {
         sleep_disable(); // Sleep-Modus deaktivieren nach dem Aufwachen
 
         // Nach dem Aufwachen
-        clock_state = 0; // Aktualisiere den Zustand zu "wach"
+        clock_state = 0; // Aktualisiere den Zustand zu "schlafend"
     } else {
         // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
         display_time();
-        clock_state = 1; // Zustand auf "schlafend" setzen
+        clock_state = 1; // Zustand auf "wach" setzen
     }
 }
