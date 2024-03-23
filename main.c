@@ -69,7 +69,7 @@ ISR(TIMER2_OVF_vect) {
 
 ISR(PCINT0_vect) {
         // Interrupt Service Routine für Pin-Change-Interrupt
-        // Notwendig, um aus dem Sleep-Modus aufzuwachen, wird aber im Code nicht direkt verwendet
+        // Notwendig, um aus dem Sleep-Modus aufzuwachen, keine weitere Funktion und deshalb auch kein Body
 }
 
 int main() {
@@ -189,60 +189,17 @@ void toggle_sleep_mode(void) {
 }
 
 void startup_sequence() {
-    //D7
-    PORTD |= (1 << 7);
-    _delay_ms(100);
-    PORTD &= ~(1 << 7);
+    for(int i = 7; i >= 3; i--){
+        PORTD |= (1 << i);
+        _delay_ms(100);
+        PORTD &= ~(1 << i);
+    }
 
-    //D6
-    PORTD |= (1 << 6);
-    _delay_ms(100);
-    PORTD &= ~(1 << 6);
-
-    //D5
-    PORTD |= (1 << 5);
-    _delay_ms(100);
-    PORTD &= ~(1 << 5);
-
-    //D4
-    PORTD |= (1 << 4);
-    _delay_ms(100);
-    PORTD &= ~(1 << 4);
-
-    //D3
-    PORTD |= (1 << 3);
-    _delay_ms(100);
-    PORTD &= ~(1 << 3);
-
-    //C5
-    PORTC |= (1 << 5);
-    _delay_ms(100);
-    PORTC &= ~(1 << 5);
-
-    //C4
-    PORTC |= (1 << 4);
-    _delay_ms(100);
-    PORTC &= ~(1 << 4);
-
-    //C3
-    PORTC |= (1 << 3);
-    _delay_ms(100);
-    PORTC &= ~(1 << 3);
-
-    //C2
-    PORTC |= (1 << 2);
-    _delay_ms(100);
-    PORTC &= ~(1 << 2);
-
-    //C1
-    PORTC |= (1 << 1);
-    _delay_ms(100);
-    PORTC &= ~(1 << 1);
-
-    //C0
-    PORTC |= (1 << 0);
-    _delay_ms(100);
-    PORTC &= ~(1 << 0);
+    for(int i = 5; i >= 0; i--){
+        PORTC |= (1 << i);
+        _delay_ms(100);
+        PORTC &= ~(1 << i);
+    }
 
     _delay_ms(500);
     allLedsOn();
