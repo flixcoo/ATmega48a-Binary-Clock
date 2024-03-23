@@ -1,8 +1,0 @@
-.DS_Store
-main_eeprom.hex
-main.elf
-main.hex
-main.o
-.idea/*
-.git/*
-.idea/atmega48a-binaeruhr.iml
