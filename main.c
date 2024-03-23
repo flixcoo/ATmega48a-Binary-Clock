@@ -46,12 +46,10 @@ uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 
 ISR(TIMER2_OVF_vect) {
-    if(clock_state) {
-        seconds++;
-        if(seconds >= 60) {
-            seconds = 0;
-            update_time();
-        }
+    seconds++;
+    if(seconds >= 60) {
+        seconds = 0;
+        update_time();
     }
 }
 
@@ -109,7 +107,9 @@ void update_time() {
         currentTime.minutes = 0;
         currentTime.hours = (currentTime.hours + 1) % 24;
     }
-    display_time();
+    if(clock_state) {
+        display_time();
+    }
 }
 
 void display_time() {
