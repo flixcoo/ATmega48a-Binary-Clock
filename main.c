@@ -76,13 +76,12 @@ ISR(TIMER1_COMPA_vect) {
 
         uint8_t leds_on = (dimming_counter < (1 * (4 - dimming_step))); // Anpassung für korrektes Dimmverhalten
 
-        if (leds_on) {
+        if (clock_state && leds_on) {
             // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
             display_time();
         } else {
             // LEDs ausschalten
-            HOUR_LEDS_PORT &= ~0xF8;
-            MINUTE_LEDS_PORT &= ~0x3F;
+            all_leds_off();
         }
 }
 
@@ -104,12 +103,12 @@ int main() {
     init_clock(); //Uhr initialisieren
     setup_timer2_asynchronous(); //Timer aktivieren
     sei(); // Global Interrupts aktivieren
-    startup_sequence();
+    //startup_sequence();
     display_time(); //Startzeit darstellen
 
     // Timer1 für Software-PWM konfigurieren
     TCCR1B |= (1 << WGM12); // CTC Modus
-    OCR1A = 78; // 10 ms bei 8 MHz und Prescaler von 64
+    OCR1A = 50; // 10 ms bei 8 MHz und Prescaler von 64
     TIMSK1 |= (1 << OCIE1A); // Timer1 Compare Match Interrupt aktivieren
     TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler auf 64 setzen
 
