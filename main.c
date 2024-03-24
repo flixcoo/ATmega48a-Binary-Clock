@@ -34,11 +34,8 @@ volatile uint8_t clock_state = 1; // 1 = "wach" (aktiver Betrieb), 0 = "schlafen
 volatile uint8_t pwm_value = 0xFF;
 volatile uint8_t seconds = 0;
 
-volatile uint8_t dimming_enabled = 0; // Dimm-Funktion ist standardmäßig deaktiviert
 volatile uint8_t dimming_counter = 0;
-volatile uint8_t dimming_phase = 0; // 0: LEDs aus, 1: Dimmen aktiv
 volatile uint8_t dimming_step = 0; // Schrittweite für das Dimmen (0-3 für 25% Schritte)
-
 
 // Funktionsprototypen
 void init_clock();
@@ -70,11 +67,11 @@ uint8_t debounce_button_d(uint8_t button);
 ISR(TIMER1_COMPA_vect) {
         // Erhöht den Dimming-Zähler in jedem Timer-Intervall
         dimming_counter++;
-        if (dimming_counter >= 4) { // Reset nach 40*10ms = 400ms für einen vollständigen Zyklus
+        if (dimming_counter >= 5) { // Reset nach 40*10ms = 400ms für einen vollständigen Zyklus
             dimming_counter = 0;
         }
 
-        uint8_t leds_on = (dimming_counter < (1 * (4 - dimming_step))); // Anpassung für korrektes Dimmverhalten
+        uint8_t leds_on = (dimming_counter < (1 * (5 - dimming_step))); // Anpassung für korrektes Dimmverhalten
 
         if (clock_state && leds_on) {
             // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
@@ -84,7 +81,6 @@ ISR(TIMER1_COMPA_vect) {
             all_leds_off();
         }
 }
-
 
 ISR(TIMER2_OVF_vect) {
         seconds++;
@@ -128,7 +124,7 @@ int main() {
             }
         }
         if (debounce_button_d(BUTTON3)) {
-            dimming_step = (dimming_step + 1) % 4; // Durchlaufe die Dimmstufen
+            dimming_step = (dimming_step + 1) % 5; // Durchlaufe die Dimmstufen
             _delay_ms(50); // Entprellung
         }
 
