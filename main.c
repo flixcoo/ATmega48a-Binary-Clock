@@ -34,6 +34,12 @@ volatile uint8_t clock_state = 1; // 1 = "wach" (aktiver Betrieb), 0 = "schlafen
 volatile uint8_t pwm_value = 0xFF;
 volatile uint8_t seconds = 0;
 
+volatile uint8_t dimming_enabled = 0; // Dimm-Funktion ist standardmäßig deaktiviert
+volatile uint8_t dimming_counter = 0;
+volatile uint8_t dimming_phase = 0; // 0: LEDs aus, 1: Dimmen aktiv
+volatile uint8_t dimming_step = 0; // Schrittweite für das Dimmen (0-3 für 25% Schritte)
+
+
 // Funktionsprototypen
 void init_clock();
 
@@ -55,9 +61,31 @@ void all_leds_on();
 
 void all_leds_off();
 
+void toggle_dimming();
+
 uint8_t debounce_button_b(uint8_t button);
 
 uint8_t debounce_button_d(uint8_t button);
+
+ISR(TIMER1_COMPA_vect) {
+        // Erhöht den Dimming-Zähler in jedem Timer-Intervall
+        dimming_counter++;
+        if (dimming_counter >= 4) { // Reset nach 40*10ms = 400ms für einen vollständigen Zyklus
+            dimming_counter = 0;
+        }
+
+        uint8_t leds_on = (dimming_counter < (1 * (4 - dimming_step))); // Anpassung für korrektes Dimmverhalten
+
+        if (leds_on) {
+            // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
+            display_time();
+        } else {
+            // LEDs ausschalten
+            HOUR_LEDS_PORT &= ~0xF8;
+            MINUTE_LEDS_PORT &= ~0x3F;
+        }
+}
+
 
 ISR(TIMER2_OVF_vect) {
         seconds++;
@@ -79,6 +107,12 @@ int main() {
     startup_sequence();
     display_time(); //Startzeit darstellen
 
+    // Timer1 für Software-PWM konfigurieren
+    TCCR1B |= (1 << WGM12); // CTC Modus
+    OCR1A = 78; // 10 ms bei 8 MHz und Prescaler von 64
+    TIMSK1 |= (1 << OCIE1A); // Timer1 Compare Match Interrupt aktivieren
+    TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler auf 64 setzen
+
     while (1) {
         if (!clock_state) {
             set_sleep_mode(SLEEP_MODE_ADC);
@@ -95,10 +129,8 @@ int main() {
             }
         }
         if (debounce_button_d(BUTTON3)) {
-            currentTime.hours = (currentTime.hours + 1) % 24;
-            if (clock_state) {
-                display_time();
-            }
+            dimming_step = (dimming_step + 1) % 4; // Durchlaufe die Dimmstufen
+            _delay_ms(50); // Entprellung
         }
 
         if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))){
@@ -205,11 +237,11 @@ void startup_sequence() {
         PORTC &= ~(1 << i);
     }
 
-    _delay_ms(400);
+    _delay_ms(500);
     all_leds_on();
-    _delay_ms(400);
+    _delay_ms(500);
     all_leds_off();
-    _delay_ms(200);
+    _delay_ms(500);
 }
 
 void all_leds_on() {
