@@ -41,8 +41,8 @@ volatile uint8_t pwm_active = 1;
 volatile uint8_t accuracy_test = 0;
 
 // Auto-Sleep
-volatile uint8_t csec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 180; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+volatile uint8_t sec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
+volatile uint8_t auto_sleep_limit = 150; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
