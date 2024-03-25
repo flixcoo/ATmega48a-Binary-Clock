@@ -26,23 +26,22 @@ typedef struct {
 } time_t;
 
 // Systemvariablen
-volatile time_t currentTime = {12, 0};
-volatile uint8_t clock_state = 1; // 1 = "wach" (aktiver Betrieb), 0 = "schlafend" (Sleep-Mode)
-volatile uint8_t seconds = 0;
+volatile time_t currentTime = {12, 0};      // Initialzeit - 12:00 Uhr
+volatile uint8_t clock_state = 1;           // 1 = "wach" (aktiver Betrieb), 0 = "schlafend" (Sleep-Mode)
+volatile uint8_t seconds = 0;               // Aktuelle Sekunden der Uhr
 
 // PWM-Variablem
-volatile uint8_t max_dimming_steps = 10; // Anzahl der Dimmstufen
-volatile uint8_t max_pwm_steps = 14; // Phasenlaenger der Pulsweitenmodulation
-volatile uint8_t current_dimming_step = 0; // Aktuelle Dimmstufe
-volatile uint8_t current_pwm_step = 0; // Aktueller Schritt der Pulsweitenmodulation
+volatile uint8_t max_dimming_steps = 10;    // Anzahl der Dimmstufen
+volatile uint8_t max_pwm_steps = 14;        // Phasenlaenger der Pulsweitenmodulation
+volatile uint8_t current_dimming_step = 0;  // Aktuelle Dimmstufe
+volatile uint8_t current_pwm_step = 0;      // Aktueller Schritt der Pulsweitenmodulation
 
-// Testmodus
-volatile uint8_t pwm_active = 1;
-volatile uint8_t accuracy_test = 0;
+volatile uint8_t pwm_active = 1;            // 1 = PWM ist aktiv, 0 = PWM ist deaktiviert
+volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmessungs-Modus, 0 = Zeitmessungsmodus ist aus
 
 // Auto-Sleep
 volatile uint8_t sec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 150; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+volatile uint8_t auto_sleep_limit = 180; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
@@ -55,6 +54,7 @@ void update_time();
 void display_time();
 void toggle_sleep_mode();
 void cycle_dimming_steps();
+void toggle_accuracy_test();
 
 // Hilfsfunktionen
 void startup_sequence();
@@ -62,7 +62,6 @@ uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 void all_leds_on();
 void all_leds_off();
-void toggle_accuracy_test();
 
 // == Interrupt Service Routinen ==
 // Timer1 Compare
@@ -192,7 +191,7 @@ void update_time() {
 
 // Zeit auf den LEDs anzeigen
 void display_time() {
-    all_leds_off();                 // Aktuell angezeigte Zeit zuruecksetzten
+    all_leds_off();                             // Aktuell angezeigte Zeit zuruecksetzten
 
     // Stunden-LEDs setzten
     for (uint8_t i = 0; i < 5; i++) {           // Durch die Fuenf Stunden-LEDs iterieren
@@ -209,16 +208,12 @@ void display_time() {
     }
 }
 
-// Funktion für Buttons an PB0 & PB1
-uint8_t debounce_button_b(uint8_t button) {
-    _delay_ms(50);
-    return !(PINB & button);
-}
-
-// Funktion fuer Button an PD2
-uint8_t debounce_button_d(uint8_t button) {
-    _delay_ms(50);
-    return !(PIND & button);
+void cycle_dimming_steps(){
+    if (current_dimming_step > 0) { // Solange die aktuelle Stufe groesser als 0 ist
+        current_dimming_step--; // ... wird eine Stufe abgezogen
+    } else {
+        current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
+    }
 }
 
 // Stromsparmodus de-/aktivieren
@@ -232,6 +227,33 @@ void toggle_sleep_mode() {
     }
 }
 
+void toggle_accuracy_test(){
+    if(accuracy_test){
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+        _delay_ms(300);
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+        _delay_ms(300);
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+
+        accuracy_test = 0;
+        pwm_active = 1;
+    } else{
+        accuracy_test = 1;
+        pwm_active = 0;
+
+        all_leds_on();
+        _delay_ms(2000);
+        all_leds_off();
+    }
+}
+
+// Startsequenz, welche beim Starten der Uhr abgelaufen wird
 void startup_sequence() {
     for (int i = 7; i >= 3; i--) {
         PORTD |= (1 << i);
@@ -268,6 +290,18 @@ void startup_sequence() {
     _delay_ms(200);
 }
 
+// Funktion für Buttons an PB0 & PB1
+uint8_t debounce_button_b(uint8_t button) {
+    _delay_ms(50);
+    return !(PINB & button);
+}
+
+// Funktion fuer Button an PD2
+uint8_t debounce_button_d(uint8_t button) {
+    _delay_ms(50);
+    return !(PIND & button);
+}
+
 // Alle LEDs aktivieren
 void all_leds_on() {
     PORTC |= MINUTE_LEDS; //00111111 - Minuten-LEDs
@@ -278,38 +312,4 @@ void all_leds_on() {
 void all_leds_off() {
     PORTC &= ~MINUTE_LEDS; //00111111 - Minuten-LEDs
     PORTD &= ~HOUR_LEDS; //11111000 - Stunden-LEDs
-}
-
-void toggle_accuracy_test(){
-    if(accuracy_test){
-        all_leds_on();
-        _delay_ms(300);
-        all_leds_off();
-        _delay_ms(300);
-        all_leds_on();
-        _delay_ms(300);
-        all_leds_off();
-        _delay_ms(300);
-        all_leds_on();
-        _delay_ms(300);
-        all_leds_off();
-
-        accuracy_test = 0;
-        pwm_active = 1;
-    } else{
-        accuracy_test = 1;
-        pwm_active = 0;
-
-        all_leds_on();
-        _delay_ms(2000);
-        all_leds_off();
-    }
-}
-
-void cycle_dimming_steps(){
-    if (current_dimming_step > 0) { // Solange die aktuelle Stufe groesser als 0 ist
-        current_dimming_step--; // ... wird eine Stufe abgezogen
-    } else {
-        current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
-    }
 }
