@@ -77,12 +77,10 @@ ISR(TIMER1_COMPA_vect) {
 
         uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step)); // Verhaeltnis Low zu High Pegel
 
-        if (clock_state) {          // Uhr ist "wach"
-            if (leds_on) {          // High-Pegel-Phase
-                display_time();     // Setzte High Pegel
-            } else {                // Low-Pegel Phase
-                all_leds_off();     // Setzte Low Pegel
-            }
+        if (leds_on) {          // High-Pegel-Phase
+            display_time();     // Setzte High Pegel
+        } else {                // Low-Pegel Phase
+            all_leds_off();     // Setzte Low Pegel
         }
     }
 }
@@ -130,27 +128,31 @@ int main() {
             toggle_sleep_mode();
         }
 
-        if((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
+        if ((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))) { // Taster 1 + 2 werden gedrueckt
             toggle_accuracy_test();
             _delay_ms(100); // Entprellung
-        } else if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Taster 2 + 3 werden gedrueckt
-            cycle_dimming_steps();  // Naechste Dimmstufe
-            _delay_ms(100);         // Entprellung
-        } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
-            _delay_ms(100);         // Entprellung
-            pwm_active = 0;
-            all_leds_off();
-            startup_sequence();
-            pwm_active = 1;
-        } else if (debounce_button_b(BUTTON1) && !accuracy_test) {
-            toggle_sleep_mode();// Schalte den Energiesparmodus um
-            _delay_ms(50);      // Entprellung
-        } else if (debounce_button_b(BUTTON2) && !accuracy_test) {
-            currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
-            _delay_ms(50);                                          // Entprellung
-        } else if (debounce_button_d(BUTTON3) && !accuracy_test) {
-            currentTime.hours = (currentTime.hours + 1) % 24;   // Erhoehe Stunden um 1, maximal bis 24
-            _delay_ms(50);                                      // Entprellung
+        }
+        if(!accuracy_test)
+        {
+            if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Taster 2 + 3 werden gedrueckt
+                cycle_dimming_steps();  // Naechste Dimmstufe
+                _delay_ms(100);         // Entprellung
+            } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
+                _delay_ms(100);         // Entprellung
+                pwm_active = 0;
+                all_leds_off();
+                startup_sequence();
+                pwm_active = 1;
+            } else if (debounce_button_b(BUTTON1)) {
+                toggle_sleep_mode();// Schalte den Energiesparmodus um
+                _delay_ms(50);      // Entprellung
+            } else if (debounce_button_b(BUTTON2)) {
+                currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
+                _delay_ms(50);                                          // Entprellung
+            } else if (debounce_button_d(BUTTON3)) {
+                currentTime.hours = (currentTime.hours + 1) % 24;   // Erhoehe Stunden um 1, maximal bis 24
+                _delay_ms(50);                                      // Entprellung
+            }
         }
     }
 }
@@ -230,10 +232,12 @@ void cycle_dimming_steps(){
 void toggle_sleep_mode() {
     if (clock_state) {      // Uhr ist im Zustand "wach"
         all_leds_off();     // Alle LEDs deaktivieren
+        pwm_active = 0;     // Deaktiviere PWM
         clock_state = 0;    // Zustand der Uhr auf "schlafend" setzen
     } else {                // Uhr ist im Zustand "schlafend"
         display_time();     // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
         clock_state = 1;    // Zustand auf "wach" setzen
+        pwm_active = 1;     // Aktiviere PWM
     }
 }
 
