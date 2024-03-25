@@ -42,7 +42,7 @@ volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmes
 
 // Auto-Sleep
 volatile uint8_t sec_sleep_count = 0;       // Sekundenzeahler fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 5;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+volatile uint8_t auto_sleep_limit = 150;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
