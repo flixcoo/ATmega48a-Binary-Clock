@@ -113,34 +113,30 @@ int main() {
         }
 
         if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))) { // Taster 2 + 3 werden gedrueckt
-            if (current_dimming_step >
-                0) {                                 // Solange die aktuelle Stufe groesser als 0 ist
-                current_dimming_step--;                                     // ... wird eine Stufe abgezogen
+            if (current_dimming_step >0) { // Solange die aktuelle Stufe groesser als 0 ist
+                current_dimming_step--; // ... wird eine Stufe abgezogen
             } else {
-                current_dimming_step = max_dimming_steps -
-                                       1;               // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
+                current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
             }
-            _delay_ms(
-                    500);                                                 // Entprellung hoeher, da zwei Taster gedrueckt werden
+            _delay_ms(500); // Entprellung hoeher, da zwei Taster gedrueckt werden
         } else if (debounce_button_b(BUTTON2)) {
-            currentTime.minutes = (currentTime.minutes + 1) % 60;           // Erhoehe Minuten um 1, maximal bis 60
-            _delay_ms(100);                                                 // Entprellung
+            currentTime.minutes = (currentTime.minutes + 1) % 60; // Erhoehe Minuten um 1, maximal bis 60
+            _delay_ms(100); // Entprellung
         } else if (debounce_button_d(BUTTON3)) {
-            currentTime.hours = (currentTime.hours + 1) % 24;               // Erhoehe Stunden um 1, maximal bis 24
-            _delay_ms(100);                                                 // Entprellung
+            currentTime.hours = (currentTime.hours + 1) % 24; // Erhoehe Stunden um 1, maximal bis 24
+            _delay_ms(100);  // Entprellung
         }
     }
 }
 
 // Timer 2 im asynchronen Modus fuer Sekundezaehlung konfigurieren
 void setup_timer2_asynchronous() {
-    ASSR |= (1 << AS2); // Aktiviere den asynchronen Modus von Timer2
-    // Konfiguriere Timer2
-    TCCR2A = 0; // Normaler Modus
+    ASSR |= (1 << AS2);                 // Aktiviere den asynchronen Modus von Timer2
+    TCCR2A = 0;                         // Normaler Modus des Timer2
     TCCR2B = (1 << CS22) | (1 << CS20); // Prescaler auf 128 setzen
     // Warte, bis die Update-Busy-Flags geloescht sind
     while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
-    TIMSK2 = (1 << TOIE2); // Timer/Counter2 Overflow Interrupt Enable
+    TIMSK2 = (1 << TOIE2);              // Aktiviere den Timer2 Overflow Interrupt
 }
 
 // Timer1 für Pulsweitenmodulation konfigurieren
@@ -163,7 +159,7 @@ void init_clock(void) {
     BUTTON_PORT_D |= BUTTON3;                   // Pull-up Widerstand des Tasters aktivieren
 
     PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig für das Aufwachen)
-    PCMSK0 |= (1 << PCINT0) | (1 << PCINT1);    // Pin-Change-Interrupts für PB0 und PB1 aktivieren
+    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts für PB0 und PB1 aktivieren
 }
 
 // Interne Zeit aktualisieren
