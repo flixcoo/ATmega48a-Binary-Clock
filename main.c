@@ -35,7 +35,8 @@ volatile uint8_t pwm_value = 0xFF;
 volatile uint8_t seconds = 0;
 
 volatile uint8_t dimming_counter = 0;
-volatile uint8_t dimming_step = 0; // Schrittweite für das Dimmen (0-3 für 25% Schritte)
+volatile uint8_t current_dimming_step = 0; // Schrittweite für das Dimmen (0-3 für 25% Schritte)
+volatile uint8_t max_dimming_steps =10;
 
 // Funktionsprototypen
 void init_clock();
@@ -67,18 +68,16 @@ uint8_t debounce_button_d(uint8_t button);
 ISR(TIMER1_COMPA_vect) {
         // Erhöht den Dimming-Zähler in jedem Timer-Intervall
         dimming_counter++;
-        if (dimming_counter >= 5) { // Reset nach 40*10ms = 400ms für einen vollständigen Zyklus
+        if (dimming_counter >= 14) {
             dimming_counter = 0;
         }
 
-        uint8_t leds_on = (dimming_counter < (1 * (5 - dimming_step))); // Anpassung für korrektes Dimmverhalten
+        uint8_t leds_on = (dimming_counter < (max_dimming_steps - current_dimming_step)); // Anpassung für korrektes Dimmverhalten
 
         if (clock_state && leds_on) {
-            // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
-            display_time();
+            display_time(); // eingeschaltete Phase
         } else {
-            // LEDs ausschalten
-            all_leds_off();
+            all_leds_off(); // ausgeschaltete Phase
         }
 }
 
@@ -104,7 +103,7 @@ int main() {
 
     // Timer1 für Software-PWM konfigurieren
     TCCR1B |= (1 << WGM12); // CTC Modus
-    OCR1A = 50; // 10 ms bei 8 MHz und Prescaler von 64
+    OCR1A = 15; // 10 ms bei 8 MHz und Prescaler von 64
     TIMSK1 |= (1 << OCIE1A); // Timer1 Compare Match Interrupt aktivieren
     TCCR1B |= (1 << CS11) | (1 << CS10); // Prescaler auf 64 setzen
 
@@ -117,19 +116,17 @@ int main() {
             _delay_ms(50);
             toggle_sleep_mode();
         }
-        if (debounce_button_b(BUTTON2)) {
-            currentTime.minutes = (currentTime.minutes + 1) % 60;
-            if (clock_state) {
-                display_time();
+        if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))) {
+            if (current_dimming_step > 0) { // Durchlaufen der Dimmstufen von Oben nach Unten
+                current_dimming_step--;
+            } else {
+                current_dimming_step = max_dimming_steps - 1;
             }
-        }
-        if (debounce_button_d(BUTTON3)) {
-            dimming_step = (dimming_step + 1) % 5; // Durchlaufe die Dimmstufen
-            _delay_ms(50); // Entprellung
-        }
-
-        if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))){
-            //ToDo
+            _delay_ms(500); // Entprellung
+        } else if (debounce_button_b(BUTTON2)) {
+            currentTime.minutes = (currentTime.minutes + 1) % 60;
+        } else if (debounce_button_d(BUTTON3)) {
+            currentTime.hours = (currentTime.hours + 1) % 24;
         }
     }
 }
@@ -154,9 +151,10 @@ void update_time() {
         currentTime.minutes = 0;
         currentTime.hours = (currentTime.hours + 1) % 24;
     }
+    /*
     if (clock_state) {
         display_time();
-    }
+    }*/
 }
 
 void display_time() {
