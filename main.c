@@ -292,12 +292,14 @@ void startup_sequence() {
 
 // Funktion für Buttons an PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
+    sec_sleep_count = 0;
     _delay_ms(50);
     return !(PINB & button);
 }
 
 // Funktion fuer Button an PD2
 uint8_t debounce_button_d(uint8_t button) {
+    sec_sleep_count = 0;
     _delay_ms(50);
     return !(PIND & button);
 }
