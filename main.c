@@ -41,8 +41,8 @@ volatile uint8_t pwm_active = 1;            // 1 = PWM ist aktiv, 0 = PWM ist de
 volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmessungs-Modus, 0 = Zeitmessungsmodus ist aus
 
 // Auto-Sleep
-volatile uint8_t sec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 180; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+volatile uint8_t sec_sleep_count = 0;       // Sekundenzeahler fuer Auto-Sleep
+volatile uint8_t auto_sleep_limit = 150;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
@@ -59,6 +59,8 @@ void toggle_accuracy_test();
 
 // Hilfsfunktionen
 void startup_sequence();
+void sleep_mode_sequence();
+
 uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 void all_leds_on();
@@ -122,6 +124,9 @@ int main() {
         }
         if(sec_sleep_count >= auto_sleep_limit){
             sec_sleep_count = 0;
+            pwm_active = 0;
+            sleep_mode_sequence();
+            pwm_active = 1;
             toggle_sleep_mode();
         }
 
@@ -295,16 +300,27 @@ void startup_sequence() {
     _delay_ms(200);
 }
 
+void sleep_mode_sequence() {
+    all_leds_off();
+    for (int i = 0; i < 6; i++) {
+        PORTC |= (1 << i);
+        PORTD |= (1 << i+3);
+        _delay_ms(200);
+        PORTC &= ~(1 << i);
+        PORTD &= ~(1 << i+3);
+    }
+}
+
 // Funktion für Buttons an PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
-    sec_sleep_count = 0;
+    //sec_sleep_count = 0;
     _delay_ms(50);
     return !(PINB & button);
 }
 
 // Funktion fuer Button an PD2
 uint8_t debounce_button_d(uint8_t button) {
-    sec_sleep_count = 0;
+    //sec_sleep_count = 0;
     _delay_ms(50);
     return !(PIND & button);
 }
