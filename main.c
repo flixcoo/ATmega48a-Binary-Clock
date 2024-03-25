@@ -115,7 +115,7 @@ int main() {
     while (1) {
         // Ist die Uhr im Energiesparmodus?
         if (!clock_state) {
-            set_sleep_mode(SLEEP_MODE_ADC); // Konfiguriere Energiesparmodus
+            set_sleep_mode(SLEEP_MODE_PWR_SAVE); // Konfiguriere Energiesparmodus
             sleep_mode();                   // Aktiviere Energiesparmodus
         }
 
