@@ -81,10 +81,11 @@ ISR(TIMER1_COMPA_vect) {
 
 // Timer2 Overflow
 ISR(TIMER2_OVF_vect) {
-    seconds++;              //Bei Overflow: zaehle die Sekunden hoch
-    if (seconds >= 60) {    //Wenn Sekunden ueber 60
-        seconds = 0;        //Setzte Sekunden auf 0 zurueck
-        update_time();      //Aktualisiere die interne Zeit
+    PIND ^= (1<<PD0);       // Wechseln des Zustands von PD0
+    seconds++;              // Bei Overflow: zaehle die Sekunden hoch
+    if (seconds >= 60) {    // Wenn Sekunden ueber 60
+        seconds = 0;        // Setzte Sekunden auf 0 zurueck
+        update_time();      // Aktualisiere die interne Zeit
     }
 }
 
@@ -160,6 +161,8 @@ void init_clock(void) {
 
     PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig für das Aufwachen)
     PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts für PB0 und PB1 aktivieren
+
+    DDRD |= (1<<PD0);                           // Setze PD0 als Ausgang fuer die Zeitmessung
 }
 
 // Interne Zeit aktualisieren
