@@ -41,6 +41,9 @@ volatile uint8_t max_pwm_steps = 14; // Phasenlaenger der Pulsweitenmodulation
 volatile uint8_t current_dimming_step = 0; // Aktuelle Dimmstufe
 volatile uint8_t current_pwm_step = 0; // Aktueller Schritt der Pulsweitenmodulation
 
+volatile uint8_t pwm_active = 1;
+volatile uint8_t accuracy_test = 0;
+
 // == Funktionsprototypen ==
 // Systemkonfigurationen
 void setup_timer1_for_pwm();
@@ -51,7 +54,7 @@ void init_clock();
 void update_time();
 void display_time();
 void toggle_sleep_mode();
-void toggle_dimming();
+void cycle_dimming_steps();
 
 // Hilfsfunktionen
 void startup_sequence();
@@ -59,29 +62,36 @@ uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 void all_leds_on();
 void all_leds_off();
+void toggle_accuracy_test();
 
 // == Interrupt Service Routinen ==
 // Timer1 Compare
 ISR(TIMER1_COMPA_vect) {
-    current_pwm_step++;                         // Erhoehen des Phasen-Steps
-    if (current_pwm_step >= max_pwm_steps) {    // Wenn max_pwm_steps ueberschritten wird
-        current_pwm_step = 0;               // ... wieder auf 0 setzten
-    }
+    if(pwm_active){
+        current_pwm_step++;                         // Erhoehen des Phasen-Steps
+        if (current_pwm_step >= max_pwm_steps) {    // Wenn max_pwm_steps ueberschritten wird
+            current_pwm_step = 0;               // ... wieder auf 0 setzten
+        }
 
-    uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step)); // Verhaeltnis Low zu High Pegel
+        uint8_t leds_on = (current_pwm_step <
+                           (max_dimming_steps - current_dimming_step)); // Verhaeltnis Low zu High Pegel
 
-    if (clock_state){                    // Uhr ist "wach"
-        if (leds_on) {                  // High-Pegel-Phase
-            display_time();             // Setzte High Pegel
-        } else {                        // Low-Pegel Phase
-            all_leds_off();             // Setzte Low Pegel
+        if (clock_state) {                   // Uhr ist "wach"
+            if (leds_on) {                  // High-Pegel-Phase
+                display_time();             // Setzte High Pegel
+            } else {                        // Low-Pegel Phase
+                all_leds_off();             // Setzte Low Pegel
+            }
         }
     }
 }
 
 // Timer2 Overflow
 ISR(TIMER2_OVF_vect) {
-    PIND ^= (1<<PD0);       // Wechseln des Zustands von PD0
+    if(accuracy_test){
+        PORTD ^= (1 << PD0);
+    }
+    // Wechseln des Zustands von PD0
     seconds++;              // Bei Overflow: zaehle die Sekunden hoch
     if (seconds >= 60) {    // Wenn Sekunden ueber 60
         seconds = 0;        // Setzte Sekunden auf 0 zurueck
@@ -108,24 +118,23 @@ int main() {
             set_sleep_mode(SLEEP_MODE_ADC); // Konfiguriere Energiesparmodus
             sleep_mode();                   // Aktiviere Energiesparmodus
         }
-        if (debounce_button_b(BUTTON1)) {
-            _delay_ms(100);                 // Entprellung
-            toggle_sleep_mode();            // Schalte den Energiesparmodus um
-        }
 
+        if((debounce_button_d(BUTTON1)) && (debounce_button_b(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
+            toggle_accuracy_test();
+            _delay_ms(100); // Entprellung hoeher, da zwei Taster gedrueckt werden
+        }
         if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))) { // Taster 2 + 3 werden gedrueckt
-            if (current_dimming_step >0) { // Solange die aktuelle Stufe groesser als 0 ist
-                current_dimming_step--; // ... wird eine Stufe abgezogen
-            } else {
-                current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
-            }
-            _delay_ms(500); // Entprellung hoeher, da zwei Taster gedrueckt werden
-        } else if (debounce_button_b(BUTTON2)) {
+            cycle_dimming_steps();
+            _delay_ms(100); // Entprellung hoeher, da zwei Taster gedrueckt werden
+        } else if (debounce_button_b(BUTTON2) && !accuracy_test) {
             currentTime.minutes = (currentTime.minutes + 1) % 60; // Erhoehe Minuten um 1, maximal bis 60
-            _delay_ms(100); // Entprellung
-        } else if (debounce_button_d(BUTTON3)) {
+            _delay_ms(50); // Entprellung
+        } else if (debounce_button_d(BUTTON3) && !accuracy_test) {
             currentTime.hours = (currentTime.hours + 1) % 24; // Erhoehe Stunden um 1, maximal bis 24
-            _delay_ms(100);  // Entprellung
+            _delay_ms(50);  // Entprellung
+        } else if (debounce_button_b(BUTTON1) && !accuracy_test) {
+            toggle_sleep_mode();            // Schalte den Energiesparmodus um
+            _delay_ms(50);                 // Entprellung
         }
     }
 }
@@ -160,9 +169,9 @@ void init_clock(void) {
     BUTTON_PORT_D |= BUTTON3;                   // Pull-up Widerstand des Tasters aktivieren
 
     PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig für das Aufwachen)
-    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts für PB0 und PB1 aktivieren
+    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts für PB0
 
-    DDRD |= (1<<PD0);                           // Setze PD0 als Ausgang fuer die Zeitmessung
+    DDRD |= (1<<0);                             // Setze PD0 als Ausgang fuer die Zeitmessung
 }
 
 // Interne Zeit aktualisieren
@@ -246,4 +255,38 @@ void all_leds_on() {
 void all_leds_off() {
     PORTC &= ~0x3F; //00111111 - Minuten-LEDs
     PORTD &= ~0xF8; //11111000 - Stunden-LEDs
+}
+
+void toggle_accuracy_test(){
+    if(accuracy_test){
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+        _delay_ms(300);
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+        _delay_ms(300);
+        all_leds_on();
+        _delay_ms(300);
+        all_leds_off();
+
+        accuracy_test = 0;
+        pwm_active = 1;
+    } else{
+        accuracy_test = 1;
+        pwm_active = 0;
+
+        all_leds_on();
+        _delay_ms(2000);
+        all_leds_off();
+    }
+}
+
+void cycle_dimming_steps(){
+    if (current_dimming_step > 0) { // Solange die aktuelle Stufe groesser als 0 ist
+        current_dimming_step--; // ... wird eine Stufe abgezogen
+    } else {
+        current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
+    }
 }
