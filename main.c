@@ -228,20 +228,36 @@ void toggle_sleep_mode() {
 void startup_sequence() {
     for (int i = 7; i >= 3; i--) {
         PORTD |= (1 << i);
-        _delay_ms(100);
+        _delay_ms(50);
+        PORTD &= ~(1 << i);
+    }
+
+    for (int i = 3; i < 8; i++) {
+        PORTD |= (1 << i);
+        _delay_ms(50);
         PORTD &= ~(1 << i);
     }
 
     for (int i = 5; i >= 0; i--) {
         PORTC |= (1 << i);
-        _delay_ms(100);
+        _delay_ms(50);
         PORTC &= ~(1 << i);
     }
 
-    _delay_ms(500);
+    for (int i = 0; i < 6; i++) {
+        PORTC |= (1 << i);
+        _delay_ms(50);
+        PORTC &= ~(1 << i);
+    }
+
+    _delay_ms(300);
     all_leds_on();
     _delay_ms(500);
-    all_leds_off();
+    for (int i = 0; i < 6; i++) {
+        PORTC &= ~(1 << i);
+        PORTD &= ~(1 << i+3);
+        _delay_ms(200);
+    }
     _delay_ms(200);
 }
 
