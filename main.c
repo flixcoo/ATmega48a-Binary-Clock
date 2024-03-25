@@ -12,15 +12,8 @@
 #define MINUTE_LEDS_PORT PORTC
 
 // Taster-Konfigurationen
-#define BUTTON_DDR_B DDRB
-#define BUTTON_PORT_B PORTB
-#define BUTTON_PIN_B PINB
 #define BUTTON1 _BV(PB0) // Taster 1 an PB0
 #define BUTTON2 _BV(PB1) // Taster 2 an PB1
-
-#define BUTTON_DDR_D DDRD
-#define BUTTON_PORT_D PORTD
-#define BUTTON_PIN_D PIND
 #define BUTTON3 _BV(PD2) // Taster 3 an PD2
 
 // == Variablendefinition ==
@@ -100,7 +93,7 @@ ISR(TIMER2_OVF_vect) {
 }
 
 ISR(PCINT0_vect) {
-    // Interrupt Service Routine für Pin-Change-Interrupt
+    // Interrupt Service Routine fuer Pin-Change-Interrupt
     // Notwendig, um aus dem Sleep-Modus aufzuwachen, keine weitere Funktion und deshalb auch kein Body
 }
 
@@ -113,28 +106,27 @@ int main() {
     sei();                          // Globale Interrupts aktivieren
 
     while (1) {
-        // Ist die Uhr im Energiesparmodus?
-        if (!clock_state) {
-            set_sleep_mode(SLEEP_MODE_PWR_SAVE); // Konfiguriere Energiesparmodus
-            sleep_mode();                   // Aktiviere Energiesparmodus
+        if (!clock_state) {                         // Ist die Uhr im Energiesparmodus?
+            set_sleep_mode(SLEEP_MODE_PWR_SAVE);    // Konfiguriere Energiesparmodus
+            sleep_mode();                           // Aktiviere Energiesparmodus
         }
 
         if((debounce_button_d(BUTTON1)) && (debounce_button_b(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
             toggle_accuracy_test();
-            _delay_ms(100); // Entprellung hoeher, da zwei Taster gedrueckt werden
+            _delay_ms(100); // Entprellung
         }
         if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))) { // Taster 2 + 3 werden gedrueckt
-            cycle_dimming_steps();
-            _delay_ms(100); // Entprellung hoeher, da zwei Taster gedrueckt werden
+            cycle_dimming_steps();  // Naechste Dimmstufe
+            _delay_ms(100);         // Entprellung
         } else if (debounce_button_b(BUTTON2) && !accuracy_test) {
-            currentTime.minutes = (currentTime.minutes + 1) % 60; // Erhoehe Minuten um 1, maximal bis 60
-            _delay_ms(50); // Entprellung
+            currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
+            _delay_ms(50);                                          // Entprellung
         } else if (debounce_button_d(BUTTON3) && !accuracy_test) {
-            currentTime.hours = (currentTime.hours + 1) % 24; // Erhoehe Stunden um 1, maximal bis 24
-            _delay_ms(50);  // Entprellung
+            currentTime.hours = (currentTime.hours + 1) % 24;   // Erhoehe Stunden um 1, maximal bis 24
+            _delay_ms(50);                                      // Entprellung
         } else if (debounce_button_b(BUTTON1) && !accuracy_test) {
-            toggle_sleep_mode();            // Schalte den Energiesparmodus um
-            _delay_ms(50);                 // Entprellung
+            toggle_sleep_mode();// Schalte den Energiesparmodus um
+            _delay_ms(50);      // Entprellung
         }
     }
 }
@@ -162,14 +154,14 @@ void init_clock(void) {
     HOUR_LEDS_DDR |= 0xF8;                      // Stunden-LEDs als Ausgang - 11111000
     MINUTE_LEDS_DDR |= 0x3F;                    // Minuten-LEDs als Ausgang - 00111111
 
-    BUTTON_DDR_B &= ~((1 << PB0) | (1 << PB1)); // Taster an PB0 und PB1 als Eingang
-    BUTTON_PORT_B |= (BUTTON1 | BUTTON2);       // Pull-up Widerstände der Taster aktivieren
+    DDRB &= ~((1 << PB0) | (1 << PB1));         // Taster an PB0 und PB1 als Eingang
+    PORTB |= (BUTTON1 | BUTTON2);               // Pull-up Widerstaende der Taster aktivieren
 
-    BUTTON_DDR_D &= ~(1 << PD2);                // Taster an PD2 als Eingang
-    BUTTON_PORT_D |= BUTTON3;                   // Pull-up Widerstand des Tasters aktivieren
+    DDRD &= ~(1 << PD2);                        // Taster an PD2 als Eingang
+    PORTD |= BUTTON3;                           // Pull-up Widerstand des Tasters aktivieren
 
-    PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig für das Aufwachen)
-    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts für PB0
+    PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig fuer das Aufwachen)
+    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts fuer PB0
 
     DDRD |= (1<<0);                             // Setze PD0 als Ausgang fuer die Zeitmessung
 }
@@ -205,13 +197,13 @@ void display_time() {
 // Funktion für Buttons an PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
     _delay_ms(50);
-    return !(BUTTON_PIN_B & button);
+    return !(PINB & button);
 }
 
-// Funktion für Button an PD2
+// Funktion fuer Button an PD2
 uint8_t debounce_button_d(uint8_t button) {
     _delay_ms(50);
-    return !(BUTTON_PIN_D & button);
+    return !(PIND & button);
 }
 
 // Stromsparmodus de-/aktivieren
