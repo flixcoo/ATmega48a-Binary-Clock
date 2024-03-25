@@ -8,8 +8,10 @@
 // LED-Konfigurationen
 #define HOUR_LEDS_DDR    DDRD
 #define HOUR_LEDS_PORT   PORTD
+#define HOUR_LEDS        0xF8
 #define MINUTE_LEDS_DDR  DDRC
 #define MINUTE_LEDS_PORT PORTC
+#define MINUTE_LEDS      0x3F
 
 // Taster-Konfigurationen
 #define BUTTON1 _BV(PB0) // Taster 1 an PB0
@@ -34,8 +36,13 @@ volatile uint8_t max_pwm_steps = 14; // Phasenlaenger der Pulsweitenmodulation
 volatile uint8_t current_dimming_step = 0; // Aktuelle Dimmstufe
 volatile uint8_t current_pwm_step = 0; // Aktueller Schritt der Pulsweitenmodulation
 
+// Testmodus
 volatile uint8_t pwm_active = 1;
 volatile uint8_t accuracy_test = 0;
+
+// Auto-Sleep
+volatile uint8_t csec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
+volatile uint8_t auto_sleep_limit = 180; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
@@ -84,6 +91,10 @@ ISR(TIMER2_OVF_vect) {
     if(accuracy_test){
         PORTD ^= (1 << PD0);
     }
+    if(clock_state){
+        sec_sleep_count++;
+    }
+
     // Wechseln des Zustands von PD0
     seconds++;              // Bei Overflow: zaehle die Sekunden hoch
     if (seconds >= 60) {    // Wenn Sekunden ueber 60
@@ -109,6 +120,10 @@ int main() {
         if (!clock_state) {                         // Ist die Uhr im Energiesparmodus?
             set_sleep_mode(SLEEP_MODE_PWR_SAVE);    // Konfiguriere Energiesparmodus
             sleep_mode();                           // Aktiviere Energiesparmodus
+        }
+        if(sec_sleep_count >= auto_sleep_limit){
+            sec_sleep_count = 0;
+            toggle_sleep_mode();
         }
 
         if((debounce_button_d(BUTTON1)) && (debounce_button_b(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
@@ -151,8 +166,8 @@ void setup_timer1_for_pwm() {
 
 // Register und Ports konfigurieren
 void init_clock(void) {
-    HOUR_LEDS_DDR |= 0xF8;                      // Stunden-LEDs als Ausgang - 11111000
-    MINUTE_LEDS_DDR |= 0x3F;                    // Minuten-LEDs als Ausgang - 00111111
+    HOUR_LEDS_DDR |= HOUR_LEDS;                 // Stunden-LEDs als Ausgang - 11111000
+    MINUTE_LEDS_DDR |= MINUTE_LEDS;             // Minuten-LEDs als Ausgang - 00111111
 
     DDRB &= ~((1 << PB0) | (1 << PB1));         // Taster an PB0 und PB1 als Eingang
     PORTB |= (BUTTON1 | BUTTON2);               // Pull-up Widerstaende der Taster aktivieren
@@ -179,14 +194,14 @@ void update_time() {
 void display_time() {
     all_leds_off();                 // Aktuell angezeigte Zeit zuruecksetzten
 
-    // Setzen der Stunden-LEDs
+    // Stunden-LEDs setzten
     for (uint8_t i = 0; i < 5; i++) {           // Durch die Fuenf Stunden-LEDs iterieren
         if (currentTime.hours & (1 << i)) {     // Die Bits der aktuellen Zeit werden der Reihe nach ausgelesen
             HOUR_LEDS_PORT |= (1 << (PD7 - i)); // ... und auf die Stunden LEDs geschrieben
         }
     }
 
-    // Setzen der Minuten-LEDs in binaerer Form
+    // Minuten-LEDs setzten
     for (uint8_t i = 0; i < 6; i++) {           // Durch die Sechs Minuten-LEDs iterieren
         if (currentTime.minutes & (1 << i)) {   // Die Bits der aktuellen Zeit werden der Reihe nach ausgelesen
             MINUTE_LEDS_PORT |= (1 << 5 - i);   // ... und auf die Stunden LEDs geschrieben
@@ -255,14 +270,14 @@ void startup_sequence() {
 
 // Alle LEDs aktivieren
 void all_leds_on() {
-    PORTC |= 0x3F; //00111111 - Minuten-LEDs
-    PORTD |= 0xF8; //11111000 - Stunden-LEDs
+    PORTC |= MINUTE_LEDS; //00111111 - Minuten-LEDs
+    PORTD |= HOUR_LEDS; //11111000 - Stunden-LEDs
 }
 
 // Alle LEDs deaktivieren
 void all_leds_off() {
-    PORTC &= ~0x3F; //00111111 - Minuten-LEDs
-    PORTD &= ~0xF8; //11111000 - Stunden-LEDs
+    PORTC &= ~MINUTE_LEDS; //00111111 - Minuten-LEDs
+    PORTD &= ~HOUR_LEDS; //11111000 - Stunden-LEDs
 }
 
 void toggle_accuracy_test(){
