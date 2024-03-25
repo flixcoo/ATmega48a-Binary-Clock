@@ -128,15 +128,19 @@ int main() {
         if((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
             toggle_accuracy_test();
             _delay_ms(100); // Entprellung
-        }
-        if ((debounce_button_d(BUTTON3)) && (debounce_button_b(BUTTON2))) { // Taster 2 + 3 werden gedrueckt
+        } else if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Taster 2 + 3 werden gedrueckt
             cycle_dimming_steps();  // Naechste Dimmstufe
             _delay_ms(100);         // Entprellung
+        } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
+            _delay_ms(100);         // Entprellung
+            pwm_active = 0;
+            all_leds_off();
+            startup_sequence();
+            pwm_active = 1;
         } else if (debounce_button_b(BUTTON1) && !accuracy_test) {
             toggle_sleep_mode();// Schalte den Energiesparmodus um
             _delay_ms(50);      // Entprellung
         } else if (debounce_button_b(BUTTON2) && !accuracy_test) {
-            //toggle_accuracy_test();
             currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
             _delay_ms(50);                                          // Entprellung
         } else if (debounce_button_d(BUTTON3) && !accuracy_test) {
