@@ -40,6 +40,10 @@ volatile uint8_t current_pwm_step = 0; // Aktueller Schritt der Pulsweitenmodula
 volatile uint8_t pwm_active = 1;
 volatile uint8_t accuracy_test = 0;
 
+// Auto-Sleep
+volatile uint8_t sec_sleep_count = 0;  // Vergleichswert fuer Auto-Sleep
+volatile uint8_t auto_sleep_limit = 150; // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+
 // == Funktionsprototypen ==
 // Systemkonfigurationen
 void setup_timer1_for_pwm();
@@ -83,15 +87,19 @@ ISR(TIMER1_COMPA_vect) {
 
 // Timer2 Overflow
 ISR(TIMER2_OVF_vect) {
-    if(accuracy_test){
-        PORTB ^= (1 << PB0);
-    }
-    // Wechseln des Zustands von PD0
-    seconds++;              // Bei Overflow: zaehle die Sekunden hoch
-    if (seconds >= 60) {    // Wenn Sekunden ueber 60
-        seconds = 0;        // Setzte Sekunden auf 0 zurueck
-        update_time();      // Aktualisiere die interne Zeit
-    }
+        if(accuracy_test){
+            PORTD ^= (1 << PD0);
+        }
+        if(clock_state){
+            sec_sleep_count++;
+        }
+
+        // Wechseln des Zustands von PD0
+        seconds++;              // Bei Overflow: zaehle die Sekunden hoch
+        if (seconds >= 60) {    // Wenn Sekunden ueber 60
+            seconds = 0;        // Setzte Sekunden auf 0 zurueck
+            update_time();      // Aktualisiere die interne Zeit
+        }
 }
 
 ISR(PCINT0_vect) {
@@ -112,6 +120,10 @@ int main() {
         if (!clock_state) {
             set_sleep_mode(SLEEP_MODE_ADC); // Konfiguriere Energiesparmodus
             sleep_mode();                   // Aktiviere Energiesparmodus
+        }
+        if(sec_sleep_count >= auto_sleep_limit){
+            sec_sleep_count = 0;
+            toggle_sleep_mode();
         }
 
         if((debounce_button(BUTTON1)) && (debounce_button(BUTTON2))){ // Taster 1 + 2 werden gedrueckt
