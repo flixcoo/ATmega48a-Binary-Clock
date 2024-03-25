@@ -42,7 +42,7 @@ volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmes
 
 // Auto-Sleep
 volatile uint8_t sec_sleep_count = 0;       // Sekundenzeahler fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 150;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+volatile uint8_t auto_sleep_limit = 5;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
 // == Funktionsprototypen ==
 // Systemkonfigurationen
@@ -129,27 +129,32 @@ int main() {
         }
 
         if ((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))) { // Taster 1 + 2 werden gedrueckt
+            sec_sleep_count = 0;
             toggle_accuracy_test();
             _delay_ms(100); // Entprellung
         }
         if(!accuracy_test)
         {
             if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Taster 2 + 3 werden gedrueckt
+                sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
                 cycle_dimming_steps();  // Naechste Dimmstufe
                 _delay_ms(100);         // Entprellung
             } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
+                sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
                 _delay_ms(100);         // Entprellung
-                pwm_active = 0;
+                pwm_active = 0;         // PWM deaktivieren
                 all_leds_off();
-                startup_sequence();
-                pwm_active = 1;
+                startup_sequence();     // Startup Sequenz abspielen
+                pwm_active = 1;         // PWM reaktivieren
             } else if (debounce_button_b(BUTTON1)) {
                 toggle_sleep_mode();// Schalte den Energiesparmodus um
                 _delay_ms(50);      // Entprellung
             } else if (debounce_button_b(BUTTON2)) {
+                sec_sleep_count = 0;
                 currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
                 _delay_ms(50);                                          // Entprellung
             } else if (debounce_button_d(BUTTON3)) {
+                sec_sleep_count = 0;
                 currentTime.hours = (currentTime.hours + 1) % 24;   // Erhoehe Stunden um 1, maximal bis 24
                 _delay_ms(50);                                      // Entprellung
             }
@@ -317,14 +322,12 @@ void sleep_mode_sequence() {
 
 // Funktion für Buttons an PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
-    //sec_sleep_count = 0;
     _delay_ms(50);
     return !(PINB & button);
 }
 
 // Funktion fuer Button an PD2
 uint8_t debounce_button_d(uint8_t button) {
-    //sec_sleep_count = 0;
     _delay_ms(50);
     return !(PIND & button);
 }
