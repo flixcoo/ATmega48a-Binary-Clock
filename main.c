@@ -246,6 +246,7 @@ void toggle_sleep_mode() {
     }
 }
 
+// Genauigkeitsmodus de-/aktivieren
 void toggle_accuracy_test(){
     if(accuracy_test){
         all_leds_on();
@@ -272,6 +273,7 @@ void toggle_accuracy_test(){
     }
 }
 
+// LED-Test de-/aktivieren
 void toggle_led_test() {
     if (led_test) {
         all_leds_off();
