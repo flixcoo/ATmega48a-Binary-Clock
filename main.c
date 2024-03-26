@@ -145,8 +145,8 @@ int main() {
                 startup_sequence();     // Startup Sequenz abspielen
                 pwm_active = 1;         // PWM reaktivieren
             } else if (debounce_button_b(BUTTON1)) {
-                toggle_sleep_mode();// Schalte den Energiesparmodus um
-                _delay_ms(50);      // Entprellung
+                toggle_sleep_mode();    // Schalte den Energiesparmodus um
+                _delay_ms(50);          // Entprellung
             } else if (debounce_button_b(BUTTON2)) {
                 sec_sleep_count = 0;
                 currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
