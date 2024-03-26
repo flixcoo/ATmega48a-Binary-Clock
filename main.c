@@ -32,7 +32,7 @@ volatile uint8_t seconds = 0;               // Aktuelle Sekunden der Uhr
 
 // PWM-Variablem
 volatile uint8_t max_dimming_steps = 4;    // Anzahl der Dimmstufen
-volatile uint8_t max_pwm_steps = 14;        // Phasenlaenger der Pulsweitenmodulation
+volatile uint8_t max_pwm_steps = 12;        // Phasenlaenger der Pulsweitenmodulation
 volatile uint8_t current_dimming_step = 0;  // Aktuelle Dimmstufe
 volatile uint8_t current_pwm_step = 0;      // Aktueller Schritt der Pulsweitenmodulation
 
@@ -60,6 +60,8 @@ void toggle_accuracy_test();
 // Hilfsfunktionen
 void startup_sequence();
 void sleep_mode_sequence();
+void wakeup_sequence();
+
 
 uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
@@ -121,9 +123,6 @@ int main() {
         }
         if(sec_sleep_count >= auto_sleep_limit){
             sec_sleep_count = 0;
-            pwm_active = 0;
-            sleep_mode_sequence();
-            pwm_active = 1;
             toggle_sleep_mode();
         }
 
@@ -180,7 +179,7 @@ void setup_timer1_for_pwm() {
 }
 
 // Register und Ports konfigurieren
-void init_clock(void) {
+void init_clock() {
     HOUR_LEDS_DDR |= HOUR_LEDS;                 // Stunden-LEDs als Ausgang - 11111000
     MINUTE_LEDS_DDR |= MINUTE_LEDS;             // Minuten-LEDs als Ausgang - 00111111
 
@@ -237,8 +236,10 @@ void toggle_sleep_mode() {
     if (clock_state) {      // Uhr ist im Zustand "wach"
         all_leds_off();     // Alle LEDs deaktivieren
         pwm_active = 0;     // Deaktiviere PWM
+        sleep_mode_sequence();
         clock_state = 0;    // Zustand der Uhr auf "schlafend" setzen
     } else {                // Uhr ist im Zustand "schlafend"
+        wakeup_sequence();
         display_time();     // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
         clock_state = 1;    // Zustand auf "wach" setzen
         pwm_active = 1;     // Aktiviere PWM
@@ -299,12 +300,13 @@ void startup_sequence() {
 
     _delay_ms(300);
     all_leds_on();
-    _delay_ms(500);
-    for (int i = 0; i < 6; i++) {
+    _delay_ms(1000);
+    all_leds_off();
+    /*for (int i = 0; i < 6; i++) {
         PORTC &= ~(1 << i);
         PORTD &= ~(1 << i+3);
         _delay_ms(200);
-    }
+    }*/
     _delay_ms(200);
 }
 
@@ -318,6 +320,18 @@ void sleep_mode_sequence() {
         PORTD &= ~(1 << i+3);
     }
 }
+
+void wakeup_sequence(){
+    all_leds_off();
+    for (int i = 5; i >= 0; i--) {
+        PORTC |= (1 << i);
+        PORTD |= (1 << i+3);
+        _delay_ms(200);
+        PORTC &= ~(1 << i);
+        PORTD &= ~(1 << i+3);
+    }
+}
+
 
 // Funktion für Buttons an PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
