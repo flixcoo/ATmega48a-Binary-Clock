@@ -44,6 +44,9 @@ volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmes
 volatile uint8_t sec_sleep_count = 0;       // Sekundenzeahler fuer Auto-Sleep
 volatile uint8_t auto_sleep_limit = 150;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
 
+//LED-Test
+volatile uint8_t led_test = 0;
+
 // == Funktionsprototypen ==
 // Systemkonfigurationen
 void setup_timer1_for_pwm();
@@ -56,6 +59,7 @@ void display_time();
 void toggle_sleep_mode();
 void cycle_dimming_steps();
 void toggle_accuracy_test();
+void toggle_led_test();
 
 // Hilfsfunktionen
 void startup_sequence();
@@ -139,11 +143,7 @@ int main() {
                 _delay_ms(100);         // Entprellung
             } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
                 sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
-                _delay_ms(100);         // Entprellung
-                pwm_active = 0;         // PWM deaktivieren
-                all_leds_off();         // Bereinige die LEDs
-                startup_sequence();     // Startup Sequenz abspielen
-                pwm_active = 1;         // PWM reaktivieren
+                toggle_led_test();
             } else if (debounce_button_b(BUTTON1)) {
                 toggle_sleep_mode();    // Schalte den Energiesparmodus um
                 _delay_ms(50);          // Entprellung
@@ -269,6 +269,18 @@ void toggle_accuracy_test(){
         all_leds_on();
         _delay_ms(2000);
         all_leds_off();
+    }
+}
+
+void toggle_led_test() {
+    if (led_test) {
+        all_leds_off();
+        led_test = 0;
+        pwm_active = 1;     // PWM reaktivieren
+    } else {
+        pwm_active = 0;     // PWM deaktivieren
+        led_test = 1;
+        all_leds_on();
     }
 }
 
