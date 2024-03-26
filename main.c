@@ -3,7 +3,7 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 
-#define F_CPU 32768UL
+#define F_CPU 32768UL // CPU Frequenz auf 32.768 kHz, RTC-Modul-Frequenz
 
 // LED-Konfigurationen
 #define HOUR_LEDS_DDR    DDRD
@@ -31,7 +31,7 @@ volatile uint8_t clock_state = 1;           // 1 = "wach" (aktiver Betrieb), 0 =
 volatile uint8_t seconds = 0;               // Aktuelle Sekunden der Uhr
 
 // PWM-Variablem
-volatile uint8_t max_dimming_steps = 10;    // Anzahl der Dimmstufen
+volatile uint8_t max_dimming_steps = 4;    // Anzahl der Dimmstufen
 volatile uint8_t max_pwm_steps = 14;        // Phasenlaenger der Pulsweitenmodulation
 volatile uint8_t current_dimming_step = 0;  // Aktuelle Dimmstufe
 volatile uint8_t current_pwm_step = 0;      // Aktueller Schritt der Pulsweitenmodulation
@@ -75,7 +75,7 @@ ISR(TIMER1_COMPA_vect) {
             current_pwm_step = 0;                   // ... wieder auf 0 setzten
         }
 
-        uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step)); // Verhaeltnis Low zu High Pegel
+        uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step + 1)); // Verhaeltnis Low zu High Pegel
 
         if (leds_on) {          // High-Pegel-Phase
             display_time();     // Setzte High Pegel
@@ -142,7 +142,7 @@ int main() {
                 sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
                 _delay_ms(100);         // Entprellung
                 pwm_active = 0;         // PWM deaktivieren
-                all_leds_off();
+                all_leds_off();         // Bereinige die LEDs
                 startup_sequence();     // Startup Sequenz abspielen
                 pwm_active = 1;         // PWM reaktivieren
             } else if (debounce_button_b(BUTTON1)) {
@@ -228,7 +228,7 @@ void cycle_dimming_steps(){
     if (current_dimming_step > 0) { // Solange die aktuelle Stufe groesser als 0 ist
         current_dimming_step--; // ... wird eine Stufe abgezogen
     } else {
-        current_dimming_step = max_dimming_steps - 1; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
+        current_dimming_step = max_dimming_steps; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
     }
 }
 

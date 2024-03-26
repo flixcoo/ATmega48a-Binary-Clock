@@ -37,6 +37,6 @@ Das Aktivieren dieses Modus wird dadurch gekennzeichnet, dass alle LEDs 2 Sekund
 ### Energiesparmodus
 Der Energiesparmodus schaltet die LEDs aus und wechselt in den Power-Save-Mode des ATmega. Über einen Interrupt am Pin `PD0` kann dieser wieder in den normalen Betriebsmodus geholt werden. Während des Energiesparmodus verlieren die Taster **nicht** ihre Funktion. Sie können weiterhin benutzt werden, um die Uhrzeit zu verstellen bzw. Taster 1 um aus dem Sleep Modus wieder zu erwachen.
 ### Helligkeitssteuerung
-Mithilfe der Pulsweitenmodulation lässt sich über das Drücken von Taster 2 + 3 die Helligkeit 10 Stufen regeln. Dieser zirkulieren von der niedrigsten Stufe hoch zur höchsten und fangen dann wieder bei der niedrigsten Stufe an. Die Helligkeitseinstellungen werden auch beim Ein- und Ausschalten des Energiesparmodus gespeichert.
+Mithilfe der Pulsweitenmodulation lässt sich über das Drücken von Taster 2 + 3 die Helligkeit 5 Stufen regeln. Dieser zirkulieren von der niedrigsten Stufe hoch zur höchsten und fangen dann wieder bei der niedrigsten Stufe an. Die Helligkeitseinstellungen werden auch beim Ein- und Ausschalten des Energiesparmodus gespeichert.
 ### Auto Sleep
 Wenn 2:30 Minuten lang an der Uhr kein Taster gedrückt wird, so geht die Uhr automatisch in den Energiesparmodus. Sie verhält sich dann genau so, als hätte man den Taster 1 gedrückt. Der Timer setzt sicht jedes mal, wenn ein Taster gedrueckt wird zurück.
