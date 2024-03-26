@@ -311,15 +311,6 @@ void startup_sequence() {
     }
 
     _delay_ms(300);
-    all_leds_on();
-    _delay_ms(1000);
-    all_leds_off();
-    /*for (int i = 0; i < 6; i++) {
-        PORTC &= ~(1 << i);
-        PORTD &= ~(1 << i+3);
-        _delay_ms(200);
-    }*/
-    _delay_ms(200);
 }
 
 void sleep_mode_sequence() {
