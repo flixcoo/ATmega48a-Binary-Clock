@@ -25,7 +25,7 @@ Uhrenquarz: `PB6` + `PB7`
 Zeitmessung: `PD0`
 
 ## Funktionalität
-Im Standardbetrieb startet die Uhr beim Einlegen der Batterie bei 12:00 Uhr.
+Beim Einlegen der Batterie fährt die Uhr hoch (visualisiert durch ein hoch und runter laufen der LEDs) und zeigt danach die Initialzeit von 12:00 Uhr an. 2:30 Minuten nach dem Starten der Uhr geht sie in den Energiesparmodus (siehe [Energiesparmodus](#Energiesparmodus)).
 ### Tasterbelegung
 Über das Drücken des Taster 1 wird der Energiesparmodus aktiviert (siehe [Energiesparmodus](#Energiesparmodus)). Über ein weiteres Drücken des Tasters wird der Energiesparmodus wieder deaktiviert.  
 Mithilfe des Taster 2 lassen sich die Stundenzahlen, welche auf der Uhr angezeigt werden, inkrementiert. Diese gehen hoch bis 23 und starten danach wieder bei 0.
