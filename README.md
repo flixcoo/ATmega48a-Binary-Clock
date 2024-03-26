@@ -28,9 +28,9 @@ Zeitmessung: `PD0`
 Im Standardbetrieb startet die Uhr beim Einlegen der Batterie bei 12:00 Uhr.
 ### Tasterbelegung
 Über das Drücken des Taster 1 wird der Energiesparmodus aktiviert (siehe [Energiesparmodus](#Energiesparmodus)). Über ein weiteres Drücken des Tasters wird der Energiesparmodus wieder deaktiviert.  
-Mithilfe des Taster 2 lassen sich die Stundenzahlen, welche auf der Uhr angezeigt werden, inkrementiert. Diese gehen hoch bis 23 und starten danach wieder bei 0.  
-Der dritte Taster dient dem Inkrementieren der Minuten. Diese gehen hoch bis zur 59 und wechseln danach wieder auf die 0.
-Durch das gleichzeitige Drücken von Taster 1 und 2 wird in den Test-Modus für die Genauigkeit gewechselt (siehe [Zeitmessung](#Zeitmessung)). Um wieder in den normalen Betriebsmodus zu wechseln müssen erneut Button 1 und 2 gedrückt werden.
+Mithilfe des Taster 2 lassen sich die Stundenzahlen, welche auf der Uhr angezeigt werden, inkrementiert. Diese gehen hoch bis 23 und starten danach wieder bei 0.
+Der dritte Taster dient dem Inkrementieren der Minuten. Diese gehen hoch bis zur 59 und wechseln danach wieder auf die 0.  
+Durch das gleichzeitige Drücken von Taster 1 und 2 wird in den Test-Modus für die Genauigkeit gewechselt (siehe [Zeitmessung](#Zeitmessung)). Um wieder in den normalen Betriebsmodus zu wechseln müssen erneut Button 1 und 2 gedrückt werden.     
 Durch das gleichzeitige Drücken von Taster 2 und 3 wird die Helligkeitsstufe um eine Stufe erhöht (siehe [Helligkeitssteuerung](#Helligkeitssteuerung))
 ### Zeitmessung 
 Das Aktivieren dieses Modus wird dadurch gekennzeichnet, dass alle LEDs 2 Sekunden lange aufleuchten. Danach werden alle LEDs deaktiviert. Nun wird am Pin `PD0` im Sekundentakt von High- auf Low Pegel umgeschalten. Während dies passiert sind alle Buttons ohne Funktion und PWM ist deaktiviert. Um den Modus wieder zu verlassen, müssen erneut Button 1 und 2 gedrückt werden. Alle LEDs leuchten drei mal hintereinander kurz auf. Danach befindet sich die Uhr wieder im normalen Betriebsmodus und die Ausgabe an PD0 ist deaktiviert.
