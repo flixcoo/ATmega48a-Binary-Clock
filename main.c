@@ -72,7 +72,7 @@ ISR(TIMER1_COMPA_vect) {
     if(pwm_active){
         current_pwm_step++;                         // Erhoehen des Phasen-Steps
         if (current_pwm_step >= max_pwm_steps) {    // Wenn max_pwm_steps ueberschritten wird
-            current_pwm_step = 0;               // ... wieder auf 0 setzten
+            current_pwm_step = 0;                   // ... wieder auf 0 setzten
         }
 
         uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step)); // Verhaeltnis Low zu High Pegel
@@ -93,7 +93,6 @@ ISR(TIMER2_OVF_vect) {
     if(clock_state){
         sec_sleep_count++;
     }
-
     // Wechseln des Zustands von PD0
     seconds++;              // Bei Overflow: zaehle die Sekunden hoch
     if (seconds >= 60) {    // Wenn Sekunden ueber 60
@@ -175,7 +174,7 @@ void setup_timer2_asynchronous() {
 // Timer1 für Pulsweitenmodulation konfigurieren
 void setup_timer1_for_pwm() {
     TCCR1B |= (1 << WGM12);                 // CTC Modus
-    OCR1A = 15;                             // 10 ms bei 8 MHz und Prescaler von 64
+    OCR1A = 15;
     TIMSK1 |= (1 << OCIE1A);                // Timer1 Compare Match Interrupt aktivieren
     TCCR1B |= (1 << CS11) | (1 << CS10);    // Prescaler auf 64 setzen
 }
