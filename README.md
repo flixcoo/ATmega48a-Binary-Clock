@@ -1,42 +1,126 @@
-# ATmega48A - Binäruhr
-Dieses Projekt entstand in meinem 3. Semester an der Hochschule für Technik, Wirtschaft und Kultur Leipzig (HTWK) als Prüfungsleistung für das Modul _Systemnahe Programmierung_. Die Aufgabe war mit einer selbst-designten Leiterplatine und vorgegebenen Bauteilen eine Uhr zu bauen und programmieren, welche die Uhrzeit in Binär anzeigt. Den Kern der Platine bildet ein ATmega48a Mikrocontroller.
-## Pin-Belegung
-<img src="atmega_layout.png" width="500">
+# 🕒 ATmega48A - Binary Clock ⏱️
 
-### Stunden-LEDs
-Stunde 2<sup>0</sup>: `PD7`  
-Stunde 2<sup>1</sup>: `PD6`  
-Stunde 2<sup>2</sup>: `PD5`  
-Stunde 2<sup>3</sup>: `PD4`  
-Stunde 2<sup>4</sup>: `PD3`
-### Minuten-LEDs
-Minute 2<sup>0</sup>: `PC5`  
-Minute 2<sup>1</sup>: `PC4`  
-Minute 2<sup>2</sup>: `PC3`     
-Minute 2<sup>3</sup>: `PC2`  
-Minute 2<sup>4</sup>: `PC1`  
-Minute 2<sup>5</sup>: `PC0`  
-### Taster  
-Taster 1: `PB0`  
-Taster 2: `PB1`  
-Taster 3: `PD2`
-### Sonstiges
-Uhrenquarz: `PB6` + `PB7`  
-Zeitmessung: `PD0`
+![AVR](https://img.shields.io/badge/AVR-ATmega48A-blue)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-Embedded-red)
+![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
 
-## Funktionalität
-Beim Einlegen der Batterie fährt die Uhr hoch (visualisiert durch ein hoch und runter laufen der LEDs) und zeigt danach die Initialzeit von 12:00 Uhr an. 2:30 Minuten nach dem Starten der Uhr geht sie in den Energiesparmodus (siehe [Energiesparmodus](#Energiesparmodus)).
-### Tasterbelegung
-Über das Drücken des Taster 1 wird der Energiesparmodus aktiviert (siehe [Energiesparmodus](#Energiesparmodus)). Über ein weiteres Drücken des Tasters wird der Energiesparmodus wieder deaktiviert.  
-Mithilfe des Taster 2 lassen sich die Stundenzahlen, welche auf der Uhr angezeigt werden, inkrementiert. Diese gehen hoch bis 23 und starten danach wieder bei 0.
-Der dritte Taster dient dem Inkrementieren der Minuten. Diese gehen hoch bis zur 59 und wechseln danach wieder auf die 0.  
-Durch das gleichzeitige Drücken von Taster 1 und 2 wird in den Test-Modus für die Genauigkeit gewechselt (siehe [Zeitmessung](#Zeitmessung)). Um wieder in den normalen Betriebsmodus zu wechseln müssen erneut Button 1 und 2 gedrückt werden.     
-Durch das gleichzeitige Drücken von Taster 2 und 3 wird die Helligkeitsstufe um eine Stufe erhöht (siehe [Helligkeitssteuerung](#Helligkeitssteuerung))
-### Zeitmessung 
-Das Aktivieren dieses Modus wird dadurch gekennzeichnet, dass alle LEDs 2 Sekunden lange aufleuchten. Danach werden alle LEDs deaktiviert. Nun wird am Pin `PD0` im Sekundentakt von High- auf Low Pegel umgeschalten. Während dies passiert sind alle Buttons ohne Funktion und PWM ist deaktiviert. Um den Modus wieder zu verlassen, müssen erneut Button 1 und 2 gedrückt werden. Alle LEDs leuchten drei mal hintereinander kurz auf. Danach befindet sich die Uhr wieder im normalen Betriebsmodus und die Ausgabe an PD0 ist deaktiviert.
-### Energiesparmodus
-Der Energiesparmodus schaltet die LEDs aus und wechselt in den Power-Save-Mode des ATmega. Über einen Interrupt am Pin `PD0` kann dieser wieder in den normalen Betriebsmodus geholt werden. Während des Energiesparmodus verlieren die Taster **nicht** ihre Funktion. Sie können weiterhin benutzt werden, um die Uhrzeit zu verstellen bzw. Taster 1 um aus dem Sleep Modus wieder zu erwachen.
-### Helligkeitssteuerung
-Mithilfe der Pulsweitenmodulation lässt sich über das Drücken von Taster 2 + 3 die Helligkeit 5 Stufen regeln. Dieser zirkulieren von der niedrigsten Stufe hoch zur höchsten und fangen dann wieder bei der niedrigsten Stufe an. Die Helligkeitseinstellungen werden auch beim Ein- und Ausschalten des Energiesparmodus gespeichert.
-### Auto Sleep
-Wenn 2:30 Minuten lang an der Uhr kein Taster gedrückt wird, so geht die Uhr automatisch in den Energiesparmodus. Sie verhält sich dann genau so, als hätte man den Taster 1 gedrückt. Der Timer setzt sicht jedes mal, wenn ein Taster gedrueckt wird zurück.
+> A compact binary clock implementation using ATmega48A microcontroller with power-saving features and brightness control
+
+## 🛠️ Hardware Configuration
+
+### 📍 Pin Configuration
+<img src="atmega_layout.png" width="500" alt="ATmega48A Pinout Diagram">
+
+### 💡 LED Indicators
+| Function  | Bit | Pin  |
+|-----------|-----|------|
+| **Hours** | 2⁰  | `PD7` |
+|           | 2¹  | `PD6` |
+|           | 2²  | `PD5` |
+|           | 2³  | `PD4` |
+|           | 2⁴  | `PD3` |
+| **Minutes** | 2⁰ | `PC5` |
+|            | 2¹ | `PC4` |
+|            | 2² | `PC3` |
+|            | 2³ | `PC2` |
+|            | 2⁴ | `PC1` |
+|            | 2⁵ | `PC0` |
+
+### 🔘 Buttons
+- **Button 1**: `PB0`
+- **Button 2**: `PB1`
+- **Button 3**: `PD2`
+
+### 🕰️ Time & Measurements
+-  **Clock crystal**: `PB6` + `PB7`
+-  **Timing measurement**: `PD0`
+
+## ✨ Features
+
+### 🔌 Initialization
+- ⚡ Power-on sequence with LED chase animation
+- 🕛 Default start time: 12:00
+- ⏳ Auto-sleep after 2.5 minutes inactivity
+
+### 🎛️ Button Functions
+| Combination | Action |
+|-------------|--------|
+| **Button 1** | Toggle power saving mode |
+| **Button 2** | ➕ Increment hours (0→23) |
+| **Button 3** | ➕ Increment minutes (0→59) |
+| **Button 1 & 2** | ⚙️ Timing test mode |
+| **Button 2 & 3** | 💡 Cycle brightness (5 levels) |
+
+### ⚙️ Advanced Features
+<details>
+<summary><strong>🔧 Timing Measurement Mode</strong></summary>
+
+- All LEDs light up for 2s on activation
+- `PD0` toggles every second
+- Buttons disabled during test
+- Exit by pressing 1+2 again (3x LED blink)
+</details>
+
+<details>
+<summary><strong>🔋 Power Saving Mode</strong></summary>
+
+- All LEDs turned off
+- MCU in power-save mode
+- Wake via `PD0` interrupt or Button 1
+- Full button functionality maintained
+</details>
+
+<details>
+<summary><strong>🌓 Brightness Control</strong></summary>
+
+- 5 adjustable brightness levels
+- PWM-controlled LED intensity
+- Settings persist through power cycles
+- Cycle through levels with 2+3 button combo
+</details>
+
+## 🎬 Demonstration
+
+### Boot Sequence
+![boot_animation](https://github.com/user-attachments/assets/477c446e-d2a7-4ab1-aa5f-4784977676b6)
+
+```c
+// Boot sequence in the code
+void startup_sequence() {
+    for (int i = 7; i >= 3; i--) {
+        PORTD |= (1 << i);
+        _delay_ms(50);
+        PORTD &= ~(1 << i);
+    }
+
+    for (int i = 3; i < 8; i++) {
+        PORTD |= (1 << i);
+        _delay_ms(50);
+        PORTD &= ~(1 << i);
+    }
+
+    for (int i = 5; i >= 0; i--) {
+        PORTC |= (1 << i);
+        _delay_ms(50);
+        PORTC &= ~(1 << i);
+    }
+
+    for (int i = 0; i < 6; i++) {
+        PORTC |= (1 << i);
+        _delay_ms(50);
+        PORTC &= ~(1 << i);
+    }
+
+    _delay_ms(300);
+}
+```
+
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+> Developed with ❤️ during my studies at HTWK Leipzig
+> 🚀 Feel free to contribute or fork this project!
