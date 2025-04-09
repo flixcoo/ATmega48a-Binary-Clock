@@ -9,10 +9,16 @@
 
 ## 🛠️ Hardware Configuration
 
-### 📍 Pin Configuration
+### 📍 Pin Overview
 
 ![atmega48a layout](/artefacts/atmega48a_layout.png)
 
+### 📡 Circuit Board
+
+| Front View | Back View |
+|------------|-----------|
+| <img src="/artefacts/circuit_board-front.jpg" width="400" alt="Front view of PCB showing component placement"> | <img src="/artefacts/circuit_board-back.jpg" width="400" alt="Back view showing PCB traces"> |
+| *Component side with LEDs and microcontroller* | *Trace side with solder connections* |
 
 ### 💡 LED Indicators
 | Function  | Bit | Pin  |
