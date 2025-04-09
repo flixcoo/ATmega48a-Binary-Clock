@@ -130,5 +130,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-> Developed with ❤️ during my studies at HTWK Leipzig
+> Developed with ❤️ during my studies at HTWK Leipzig  
 > 🚀 Feel free to contribute or fork this project!
