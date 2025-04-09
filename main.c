@@ -3,9 +3,9 @@
 #include <avr/sleep.h>
 #include <util/delay.h>
 
-#define F_CPU 32768UL // CPU Frequenz auf 32.768 kHz, RTC-Modul-Frequenz
+#define F_CPU 32768UL // CPU frequency set to 32.768 kHz (RTC module frequency)
 
-// LED-Konfigurationen
+// LED configurations
 #define HOUR_LEDS_DDR    DDRD
 #define HOUR_LEDS_PORT   PORTD
 #define HOUR_LEDS        0xF8
@@ -13,47 +13,47 @@
 #define MINUTE_LEDS_PORT PORTC
 #define MINUTE_LEDS      0x3F
 
-// Taster-Konfigurationen
-#define BUTTON1 _BV(PB0) // Taster 1 an PB0
-#define BUTTON2 _BV(PB1) // Taster 2 an PB1
-#define BUTTON3 _BV(PD2) // Taster 3 an PD2
+// Button configurations
+#define BUTTON1 _BV(PB0) // Button 1 at PB0
+#define BUTTON2 _BV(PB1) // Button 2 at PB1
+#define BUTTON3 _BV(PD2) // Button 3 at PD2
 
-// == Variablendefinition ==
-// Zeitstruktur
+// == Variable definitions ==
+// Variable to hold the current time
 typedef struct {
     uint8_t hours;
     uint8_t minutes;
 } time_t;
 
-// Systemvariablen
-volatile time_t currentTime = {12, 0};      // Initialzeit - 12:00 Uhr
-volatile uint8_t clock_state = 1;           // 1 = "wach" (aktiver Betrieb), 0 = "schlafend" (Sleep-Mode)
-volatile uint8_t seconds = 0;               // Aktuelle Sekunden der Uhr
+// System variables
+volatile time_t currentTime = {12, 0};      // Initial time - 12:00
+volatile uint8_t clock_state = 1;           // 1 = "awake" (active mode), 0 = "sleeping" (sleep mode)
+volatile uint8_t seconds = 0;               // Current seconds counter
 
-// PWM-Variablem
-volatile uint8_t max_dimming_steps = 4;    // Anzahl der Dimmstufen
-volatile uint8_t max_pwm_steps = 12;        // Phasenlaenger der Pulsweitenmodulation
-volatile uint8_t current_dimming_step = 0;  // Aktuelle Dimmstufe
-volatile uint8_t current_pwm_step = 0;      // Aktueller Schritt der Pulsweitenmodulation
+// PWM variables
+volatile uint8_t max_dimming_steps = 4;     // Number of brightness steps
+volatile uint8_t max_pwm_steps = 12;        // PWM phase length
+volatile uint8_t current_dimming_step = 0;  // Current brightness step
+volatile uint8_t current_pwm_step = 0;      // Current PWM step
 
-// Genauigkeitsmessung
-volatile uint8_t pwm_active = 1;            // 1 = PWM ist aktiv, 0 = PWM ist deaktiviert
-volatile uint8_t accuracy_test = 0;         // 1 = Es laeuft zurzeit der Zeitmessungs-Modus, 0 = Zeitmessungsmodus ist aus
+// Accuracy measurement
+volatile uint8_t pwm_active = 1;            // 1 = PWM active, 0 = PWM inactive
+volatile uint8_t accuracy_test = 0;         // 1 = accuracy test mode active, 0 = inactive
 
-// Auto-Sleep
-volatile uint8_t sec_sleep_count = 0;       // Sekundenzeahler fuer Auto-Sleep
-volatile uint8_t auto_sleep_limit = 150;    // Nach wie vielen Sekunden die Uhr in den Energiesparmodus wechseln soll
+// Auto-sleep
+volatile uint8_t sec_sleep_count = 0;       // Seconds counter for auto-sleep
+volatile uint8_t auto_sleep_limit = 150;    // Seconds until auto-sleep activates
 
-//LED-Test
+// LED test
 volatile uint8_t led_test = 0;
 
-// == Funktionsprototypen ==
-// Systemkonfigurationen
+// == Function prototypes ==
+// System configurations
 void setup_timer1_for_pwm();
 void setup_timer2_asynchronous();
 void init_clock();
 
-// Uhrenbetrieb
+// Clock operations
 void update_time();
 void display_time();
 void toggle_sleep_mode();
@@ -61,32 +61,30 @@ void cycle_dimming_steps();
 void toggle_accuracy_test();
 void toggle_led_test();
 
-// Hilfsfunktionen
+// Helper functions
 void startup_sequence();
 void sleep_mode_sequence();
 void wakeup_sequence();
-
-
 uint8_t debounce_button_b(uint8_t button);
 uint8_t debounce_button_d(uint8_t button);
 void all_leds_on();
 void all_leds_off();
 
-// == Interrupt Service Routinen ==
+// == Interrupt Service Routines ==
 // Timer1 Compare
 ISR(TIMER1_COMPA_vect) {
     if(pwm_active){
-        current_pwm_step++;                         // Erhoehen des Phasen-Steps
-        if (current_pwm_step >= max_pwm_steps) {    // Wenn max_pwm_steps ueberschritten wird
-            current_pwm_step = 0;                   // ... wieder auf 0 setzten
+        current_pwm_step++;                         // Increment phase step
+        if (current_pwm_step >= max_pwm_steps) {    // If max steps reached
+            current_pwm_step = 0;                   // Reset to 0
         }
 
-        uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step + 1)); // Verhaeltnis Low zu High Pegel
+        uint8_t leds_on = (current_pwm_step < (max_dimming_steps - current_dimming_step + 1)); // Low/High ratio
 
-        if (leds_on) {          // High-Pegel-Phase
-            display_time();     // Setzte High Pegel
-        } else {                // Low-Pegel Phase
-            all_leds_off();     // Setzte Low Pegel
+        if (leds_on) {          // High phase
+            display_time();     // Set high level
+        } else {                // Low phase
+            all_leds_off();     // Set low level
         }
     }
 }
@@ -99,154 +97,154 @@ ISR(TIMER2_OVF_vect) {
     if(clock_state){
         sec_sleep_count++;
     }
-    // Wechseln des Zustands von PD0
-    seconds++;              // Bei Overflow: zaehle die Sekunden hoch
-    if (seconds >= 60) {    // Wenn Sekunden ueber 60
-        seconds = 0;        // Setzte Sekunden auf 0 zurueck
-        update_time();      // Aktualisiere die interne Zeit
+    // Toggle PD0 state
+    seconds++;              // On overflow: increment seconds
+    if (seconds >= 60) {    // If seconds reach 60
+        seconds = 0;        // Reset seconds
+        update_time();      // Update internal time
     }
 }
 
 ISR(PCINT0_vect) {
-    // Interrupt Service Routine fuer Pin-Change-Interrupt
-    // Notwendig, um aus dem Sleep-Modus aufzuwachen, keine weitere Funktion und deshalb auch kein Body
+    // Pin-Change Interrupt Service Routine
+    // Required to wake from sleep mode, no additional functionality needed
 }
 
 int main() {
-    init_clock();                   //Uhr initialisieren
-    setup_timer2_asynchronous();    //Timer2 im asynchronen Modus konfigurieren
-    startup_sequence();             // LED-Start-Sequenz durchlaufen lassen
-    display_time();                 // Initial die Zeit anzeigen
-    setup_timer1_for_pwm();         // Timer1 fuer die PWM konfigurieren
-    sei();                          // Globale Interrupts aktivieren
+    init_clock();                   // Initialize clock
+    setup_timer2_asynchronous();    // Configure Timer2 in asynchronous mode
+    startup_sequence();             // Run LED startup sequence
+    display_time();                 // Display initial time
+    setup_timer1_for_pwm();         // Configure Timer1 for PWM
+    sei();                          // Enable global interrupts
 
     while (1) {
-        if (!clock_state) {                         // Ist die Uhr im Energiesparmodus?
-            set_sleep_mode(SLEEP_MODE_PWR_SAVE);    // Konfiguriere Energiesparmodus
-            sleep_mode();                           // Aktiviere Energiesparmodus
+        if (!clock_state) {                         // Is clock in sleep mode?
+            set_sleep_mode(SLEEP_MODE_PWR_SAVE);    // Configure power save mode
+            sleep_mode();                           // Activate sleep mode
         }
         if(sec_sleep_count >= auto_sleep_limit){
             sec_sleep_count = 0;
             toggle_sleep_mode();
         }
 
-        if ((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))) { // Taster 1 + 2 werden gedrueckt
+        if ((debounce_button_b(BUTTON1)) && (debounce_button_b(BUTTON2))) { // Button 1 + 2 pressed
             sec_sleep_count = 0;
             toggle_accuracy_test();
-            _delay_ms(100); // Entprellung
+            _delay_ms(100); // Debounce
         }
         if(!accuracy_test)
         {
-            if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Taster 2 + 3 werden gedrueckt
-                sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
-                cycle_dimming_steps();  // Naechste Dimmstufe
-                _delay_ms(100);         // Entprellung
-            } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Taster 1 + 3 werden gedrueckt
-                sec_sleep_count = 0;    // Timer fuer Auto-Sleep auf 0
+            if ((debounce_button_b(BUTTON2)) && (debounce_button_d(BUTTON3))) { // Button 2 + 3 pressed
+                sec_sleep_count = 0;    // Reset auto-sleep timer
+                cycle_dimming_steps();  // Next brightness step
+                _delay_ms(100);         // Debounce
+            } else if ((debounce_button_b(BUTTON1)) && (debounce_button_d(BUTTON3))) { // Button 1 + 3 pressed
+                sec_sleep_count = 0;    // Reset auto-sleep timer
                 toggle_led_test();
             } else if (debounce_button_b(BUTTON1)) {
-                toggle_sleep_mode();    // Schalte den Energiesparmodus um
-                _delay_ms(50);          // Entprellung
+                toggle_sleep_mode();    // Toggle sleep mode
+                _delay_ms(50);          // Debounce
             } else if (debounce_button_b(BUTTON2)) {
                 sec_sleep_count = 0;
-                currentTime.minutes = (currentTime.minutes + 1) % 60;   // Erhoehe Minuten um 1, maximal bis 60
-                _delay_ms(50);                                          // Entprellung
+                currentTime.minutes = (currentTime.minutes + 1) % 60;   // Increment minutes (0-59)
+                _delay_ms(50);                                          // Debounce
             } else if (debounce_button_d(BUTTON3)) {
                 sec_sleep_count = 0;
-                currentTime.hours = (currentTime.hours + 1) % 24;   // Erhoehe Stunden um 1, maximal bis 24
-                _delay_ms(50);                                      // Entprellung
+                currentTime.hours = (currentTime.hours + 1) % 24;   // Increment hours (0-23)
+                _delay_ms(50);                                      // Debounce
             }
         }
     }
 }
 
-// Timer 2 im asynchronen Modus fuer Sekundezaehlung konfigurieren
+// Configure Timer2 in asynchronous mode for seconds counting
 void setup_timer2_asynchronous() {
-    ASSR |= (1 << AS2);                 // Aktiviere den asynchronen Modus von Timer2
-    TCCR2A = 0;                         // Normaler Modus des Timer2
-    TCCR2B = (1 << CS22) | (1 << CS20); // Prescaler auf 128 setzen
-    // Warte, bis die Update-Busy-Flags geloescht sind
+    ASSR |= (1 << AS2);                 // Enable Timer2 asynchronous mode
+    TCCR2A = 0;                         // Timer2 normal mode
+    TCCR2B = (1 << CS22) | (1 << CS20); // Set prescaler to 128
+    // Wait until update busy flags are cleared
     while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
-    TIMSK2 = (1 << TOIE2);              // Aktiviere den Timer2 Overflow Interrupt
+    TIMSK2 = (1 << TOIE2);              // Enable Timer2 overflow interrupt
 }
 
-// Timer1 für Pulsweitenmodulation konfigurieren
+// Configure Timer1 for PWM
 void setup_timer1_for_pwm() {
-    TCCR1B |= (1 << WGM12);                 // CTC Modus
+    TCCR1B |= (1 << WGM12);                 // CTC mode
     OCR1A = 15;
-    TIMSK1 |= (1 << OCIE1A);                // Timer1 Compare Match Interrupt aktivieren
-    TCCR1B |= (1 << CS11) | (1 << CS10);    // Prescaler auf 64 setzen
+    TIMSK1 |= (1 << OCIE1A);                // Enable Timer1 compare match interrupt
+    TCCR1B |= (1 << CS11) | (1 << CS10);    // Set prescaler to 64
 }
 
-// Register und Ports konfigurieren
+// Configure registers and ports
 void init_clock() {
-    HOUR_LEDS_DDR |= HOUR_LEDS;                 // Stunden-LEDs als Ausgang - 11111000
-    MINUTE_LEDS_DDR |= MINUTE_LEDS;             // Minuten-LEDs als Ausgang - 00111111
+    HOUR_LEDS_DDR |= HOUR_LEDS;                 // Hour LEDs as output - 11111000
+    MINUTE_LEDS_DDR |= MINUTE_LEDS;             // Minute LEDs as output - 00111111
 
-    DDRB &= ~((1 << PB0) | (1 << PB1));         // Taster an PB0 und PB1 als Eingang
-    PORTB |= (BUTTON1 | BUTTON2);               // Pull-up Widerstaende der Taster aktivieren
+    DDRB &= ~((1 << PB0) | (1 << PB1));         // Buttons at PB0 and PB1 as input
+    PORTB |= (BUTTON1 | BUTTON2);               // Enable button pull-up resistors
 
-    DDRD &= ~(1 << PD2);                        // Taster an PD2 als Eingang
-    PORTD |= BUTTON3;                           // Pull-up Widerstand des Tasters aktivieren
+    DDRD &= ~(1 << PD2);                        // Button at PD2 as input
+    PORTD |= BUTTON3;                           // Enable button pull-up resistor
 
-    PCICR |= (1 << PCIE0);                      // Pin-Change-Interrupts aktivieren (Notwendig fuer das Aufwachen)
-    PCMSK0 |= (1 << PCINT0);                    // Pin-Change-Interrupts fuer PB0
+    PCICR |= (1 << PCIE0);                      // Enable pin-change interrupts (needed for wake-up)
+    PCMSK0 |= (1 << PCINT0);                    // Pin-change interrupt for PB0
 
-    DDRD |= (1<<0);                             // Setze PD0 als Ausgang fuer die Zeitmessung
+    DDRD |= (1<<0);                             // Set PD0 as output for timing measurement
 }
 
-// Interne Zeit aktualisieren
+// Update internal time
 void update_time() {
-    currentTime.minutes++;                                  // Erhoehe Minuten um 1
-    if (currentTime.minutes >= 60) {                        // Wenn Minuten 60 erreicht haben
-        currentTime.minutes = 0;                            // Minuten zurueck auf 0 setzten
-        currentTime.hours = (currentTime.hours + 1) % 24;   // ... und dafuer Stunden eine hoch setzten
+    currentTime.minutes++;                                  // Increment minutes
+    if (currentTime.minutes >= 60) {                        // If minutes reach 60
+        currentTime.minutes = 0;                            // Reset minutes
+        currentTime.hours = (currentTime.hours + 1) % 24;   // Increment hours
     }
 }
 
-// Zeit auf den LEDs anzeigen
+// Display time on LEDs
 void display_time() {
-    all_leds_off();                             // Aktuell angezeigte Zeit zuruecksetzten
+    all_leds_off();                             // Clear current display
 
-    // Stunden-LEDs setzten
-    for (uint8_t i = 0; i < 5; i++) {           // Durch die Fuenf Stunden-LEDs iterieren
-        if (currentTime.hours & (1 << i)) {     // Die Bits der aktuellen Zeit werden der Reihe nach ausgelesen
-            HOUR_LEDS_PORT |= (1 << (PD7 - i)); // ... und auf die Stunden LEDs geschrieben
+    // Set hour LEDs
+    for (uint8_t i = 0; i < 5; i++) {           // Iterate through 5 hour LEDs
+        if (currentTime.hours & (1 << i)) {     // Read current time bits
+            HOUR_LEDS_PORT |= (1 << (PD7 - i)); // Write to hour LEDs
         }
     }
 
-    // Minuten-LEDs setzten
-    for (uint8_t i = 0; i < 6; i++) {           // Durch die Sechs Minuten-LEDs iterieren
-        if (currentTime.minutes & (1 << i)) {   // Die Bits der aktuellen Zeit werden der Reihe nach ausgelesen
-            MINUTE_LEDS_PORT |= (1 << 5 - i);   // ... und auf die Stunden LEDs geschrieben
+    // Set minute LEDs
+    for (uint8_t i = 0; i < 6; i++) {           // Iterate through 6 minute LEDs
+        if (currentTime.minutes & (1 << i)) {   // Read current time bits
+            MINUTE_LEDS_PORT |= (1 << 5 - i);   // Write to minute LEDs
         }
     }
 }
 
 void cycle_dimming_steps(){
-    if (current_dimming_step > 0) { // Solange die aktuelle Stufe groesser als 0 ist
-        current_dimming_step--; // ... wird eine Stufe abgezogen
+    if (current_dimming_step > 0) { // While current step > 0
+        current_dimming_step--; // Decrement step
     } else {
-        current_dimming_step = max_dimming_steps; // Wenn bei 0 angekommen, zuruecksetzten auf Stufe 10 (bzw. 9)
+        current_dimming_step = max_dimming_steps; // If at 0, reset to max step
     }
 }
 
-// Stromsparmodus de-/aktivieren
+// Toggle sleep mode
 void toggle_sleep_mode() {
-    if (clock_state) {      // Uhr ist im Zustand "wach"
-        all_leds_off();     // Alle LEDs deaktivieren
-        pwm_active = 0;     // Deaktiviere PWM
+    if (clock_state) {      // Clock is "awake"
+        all_leds_off();     // Turn off all LEDs
+        pwm_active = 0;     // Disable PWM
         sleep_mode_sequence();
-        clock_state = 0;    // Zustand der Uhr auf "schlafend" setzen
-    } else {                // Uhr ist im Zustand "schlafend"
+        clock_state = 0;    // Set state to "sleeping"
+    } else {                // Clock is "sleeping"
         wakeup_sequence();
-        display_time();     // LEDs entsprechend der aktuellen Uhrzeit wieder einschalten
-        clock_state = 1;    // Zustand auf "wach" setzen
-        pwm_active = 1;     // Aktiviere PWM
+        display_time();     // Turn on LEDs according to current time
+        clock_state = 1;    // Set state to "awake"
+        pwm_active = 1;     // Enable PWM
     }
 }
 
-// Genauigkeitsmodus de-/aktivieren
+// Toggle accuracy test mode
 void toggle_accuracy_test(){
     if(accuracy_test){
         all_leds_on();
@@ -273,20 +271,20 @@ void toggle_accuracy_test(){
     }
 }
 
-// LED-Test de-/aktivieren
+// Toggle LED test mode
 void toggle_led_test() {
     if (led_test) {
         all_leds_off();
         led_test = 0;
-        pwm_active = 1;     // PWM reaktivieren
+        pwm_active = 1;     // Re-enable PWM
     } else {
-        pwm_active = 0;     // PWM deaktivieren
+        pwm_active = 0;     // Disable PWM
         led_test = 1;
         all_leds_on();
     }
 }
 
-// Startsequenz, welche beim Starten der Uhr abgelaufen wird
+// Startup sequence when clock powers on
 void startup_sequence() {
     for (int i = 7; i >= 3; i--) {
         PORTD |= (1 << i);
@@ -337,27 +335,26 @@ void wakeup_sequence(){
     }
 }
 
-
-// Funktion für Buttons an PB0 & PB1
+// Debounce function for buttons at PB0 & PB1
 uint8_t debounce_button_b(uint8_t button) {
     _delay_ms(50);
     return !(PINB & button);
 }
 
-// Funktion fuer Button an PD2
+// Debounce function for button at PD2
 uint8_t debounce_button_d(uint8_t button) {
     _delay_ms(50);
     return !(PIND & button);
 }
 
-// Alle LEDs aktivieren
+// Turn on all LEDs
 void all_leds_on() {
-    PORTC |= MINUTE_LEDS; //00111111 - Minuten-LEDs
-    PORTD |= HOUR_LEDS; //11111000 - Stunden-LEDs
+    PORTC |= MINUTE_LEDS; //00111111 - Minute LEDs
+    PORTD |= HOUR_LEDS; //11111000 - Hour LEDs
 }
 
-// Alle LEDs deaktivieren
+// Turn off all LEDs
 void all_leds_off() {
-    PORTC &= ~MINUTE_LEDS; //00111111 - Minuten-LEDs
-    PORTD &= ~HOUR_LEDS; //11111000 - Stunden-LEDs
+    PORTC &= ~MINUTE_LEDS; //00111111 - Minute LEDs
+    PORTD &= ~HOUR_LEDS; //11111000 - Hour LEDs
 }
