@@ -10,7 +10,9 @@
 ## 🛠️ Hardware Configuration
 
 ### 📍 Pin Configuration
-<img src="atmega_layout.png" width="500" alt="ATmega48A Pinout Diagram">
+
+![atmega48a layout](/artefacts/atmega48a_layout.png)
+
 
 ### 💡 LED Indicators
 | Function  | Bit | Pin  |
@@ -83,7 +85,7 @@
 ## 🎬 Demonstration
 
 ### Boot Sequence
-![boot_animation](https://github.com/user-attachments/assets/477c446e-d2a7-4ab1-aa5f-4784977676b6)
+![startup sequence](/artefacts/startup_sequence.gif)
 
 ```c
 // Boot sequence in the code
