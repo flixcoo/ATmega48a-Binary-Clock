@@ -4,6 +4,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Platform](https://img.shields.io/badge/Platform-Embedded-red)
 ![Status](https://img.shields.io/badge/Status-Completed-brightgreen)
+[![HTWK Leipzig](https://img.shields.io/badge/HTWK_Leipzig-Leipzig_University_of_Applied_Sciences-0077CC)](https://www.htwk-leipzig.de/)
 
 > A compact binary clock implementation using ATmega48A microcontroller with power-saving features and brightness control
 
