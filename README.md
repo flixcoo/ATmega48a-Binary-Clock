@@ -1,4 +1,4 @@
-# 🕒 ATmega48A - Binary Clock ⏱️
+# 🕒 ATmega48A - Binary Clock
 
 ![AVR](https://img.shields.io/badge/AVR-ATmega48A-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
